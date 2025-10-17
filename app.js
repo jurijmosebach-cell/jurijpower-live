@@ -1,10 +1,10 @@
 // === ⚽ JurijPower Live Tool - PRO Version ===
-// 📊 Quoten (Betano, Tipico, Bet365) + 🧮 Value-Bet Berechnung + 🔔 Notifications
+// 📊 Quoten (Betano, Tipico, Bet365) + 🧮 Value-Bet Berechnung + 🔔 Notifications + Sortierung
 
 const API_KEY = "c6ad1210c71b17cca24284ab8a9873b4";
 const BASE_URL = "https://v3.football.api-sports.io";
 
-const FAVORITE_LEAGUES = [78, 79, 39, 135, 140, 61]; // DE1, DE2, Premier League, Serie A, LaLiga, Ligue 1
+const FAVORITE_LEAGUES = [78, 79, 39, 135, 140, 61];
 const BOOKMAKERS = [349, 115, 8]; // Betano, Tipico, Bet365
 
 const liveContainer = document.getElementById("live-matches");
@@ -21,8 +21,7 @@ const notifiedMatches = new Set();
 // === 📡 Live Spiele laden ===
 async function fetchMatches(filter = "all") {
   const headers = { "x-apisports-key": API_KEY };
-  let url = `${BASE_URL}/fixtures?live=all`;
-  const res = await fetch(url, { headers });
+  const res = await fetch(`${BASE_URL}/fixtures?live=all`, { headers });
   const data = await res.json();
   let matches = data.response;
   if (filter === "favorites") {
@@ -38,8 +37,7 @@ async function fetchUpcoming(filter = "all") {
   const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
   const from = now.toISOString().split("T")[0];
   const to = tomorrow.toISOString().split("T")[0];
-  let url = `${BASE_URL}/fixtures?from=${from}&to=${to}`;
-  const res = await fetch(url, { headers });
+  const res = await fetch(`${BASE_URL}/fixtures?from=${from}&to=${to}`, { headers });
   const data = await res.json();
   let matches = data.response;
   if (filter === "favorites") {
@@ -97,14 +95,11 @@ function sendNotification(matchId, teamA, teamB, prob) {
 
 // === 🟡 Blinkeffekt ===
 function toggleBlinkEffect(element, shouldBlink) {
-  if (shouldBlink) {
-    element.classList.add("blink");
-  } else {
-    element.classList.remove("blink");
-  }
+  if (shouldBlink) element.classList.add("blink");
+  else element.classList.remove("blink");
 }
 
-// === 🧾 Spiele anzeigen ===
+// === 🧾 Spiele anzeigen (inkl. Sortierung nach Value) ===
 async function displayMatches(container, matches, isLive = false) {
   container.innerHTML = "";
   if (matches.length === 0) {
@@ -112,36 +107,48 @@ async function displayMatches(container, matches, isLive = false) {
     return;
   }
 
+  // ➕ Liste mit Value vorbereiten
+  const matchDataWithValue = [];
+
   for (const match of matches) {
     const prob = calcGoalProbability(match);
     const matchId = match.fixture.id;
+    const odds = await fetchOdds(matchId);
+
+    let bestValue = 0;
+    let bookmaker = null;
+    if (odds && odds.home && odds.away) {
+      const valueHome = parseFloat(calcValue(prob, odds.home));
+      const valueAway = parseFloat(calcValue(prob, odds.away));
+      bestValue = Math.max(valueHome, valueAway);
+      bookmaker = odds.bookmaker;
+    }
+
+    matchDataWithValue.push({ match, prob, bestValue, bookmaker });
+  }
+
+  // 📊 Sortieren nach Value (höchster zuerst)
+  matchDataWithValue.sort((a, b) => b.bestValue - a.bestValue);
+
+  // 🧱 Anzeige
+  for (const data of matchDataWithValue) {
+    const { match, prob, bestValue, bookmaker } = data;
     const isHigh = prob >= 70;
 
     const div = document.createElement("div");
     div.classList.add("match-card");
     toggleBlinkEffect(div, isHigh && isLive);
 
-    const odds = await fetchOdds(matchId);
     let valueText = "–";
-    let bestValue = 0;
-
-    if (odds && odds.home && odds.away) {
-      const valueHome = parseFloat(calcValue(prob, odds.home));
-      const valueAway = parseFloat(calcValue(prob, odds.away));
-      bestValue = Math.max(valueHome, valueAway);
-
-      if (bestValue >= 1.20) {
-        div.classList.add("value-highlight-red");
-        valueText = `🔥 ${bestValue} (${odds.bookmaker})`;
-      } else if (bestValue >= 1.10) {
-        div.classList.add("value-highlight-orange");
-        valueText = `💰 ${bestValue} (${odds.bookmaker})`;
-      } else if (bestValue >= 1.05) {
-        div.classList.add("value-highlight-green");
-        valueText = `✅ ${bestValue} (${odds.bookmaker})`;
-      } else {
-        valueText = `📉 ${bestValue} (${odds.bookmaker})`;
-      }
+    if (bestValue >= 1.20) {
+      div.classList.add("value-highlight-red");
+      valueText = `🔥 ${bestValue.toFixed(2)} (${bookmaker})`;
+    } else if (bestValue >= 1.10) {
+      div.classList.add("value-highlight-orange");
+      valueText = `💰 ${bestValue.toFixed(2)} (${bookmaker})`;
+    } else if (bestValue >= 1.05) {
+      div.classList.add("value-highlight-green");
+      valueText = `✅ ${bestValue.toFixed(2)} (${bookmaker})`;
     }
 
     div.innerHTML = `
@@ -154,12 +161,13 @@ async function displayMatches(container, matches, isLive = false) {
         }</span>
         <span>⚽ ${prob}%</span>
       </div>
-      <div class="match-info"><span>Value:</span> <span>${valueText}</span></div>
+      <div class="match-info"><span>Value:</span><span>${valueText}</span></div>
     `;
+
     container.appendChild(div);
 
     if (isHigh && isLive) {
-      sendNotification(matchId, match.teams.home.name, match.teams.away.name, prob);
+      sendNotification(match.fixture.id, match.teams.home.name, match.teams.away.name, prob);
     }
   }
 }
