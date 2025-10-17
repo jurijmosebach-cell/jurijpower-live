@@ -101,3 +101,29 @@ button:hover {
   font-weight: bold;
   color: #0f0;
 }
+.match-card {
+  background: #1e1e1e;
+  color: white;
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 10px;
+}
+
+.bar-bg {
+  background: #333;
+  border-radius: 5px;
+  height: 14px;
+  width: 100%;
+  margin-bottom: 6px;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 5px;
+  transition: width 0.3s ease;
+}
+
+.bar-label {
+  font-size: 13px;
+  margin-bottom: 3px;
+}
