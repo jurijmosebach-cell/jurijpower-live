@@ -1,16 +1,19 @@
-/* === JurijPower Pro - Style.css (mit Icons) === */
+/* === ⚽ JurijPower Pro - Style.css === */
 
-/* Farbvariablen (Dark Mode) */
 :root {
-  --bg: #111;
+  --bg: #0d0d0d;
   --card-bg: #1c1c1c;
-  --text: #f5f5f5;
-  --accent: #00b894;
-  --danger: #d63031;
-  --warning: #fdcb6e;
   --border: #333;
-  --shadow: rgba(0, 0, 0, 0.4);
-  font-size: 16px;
+  --text: #f5f5f5;
+  --subtext: #999;
+  --accent: #00b894;
+  --danger: #e74c3c;
+  --warning: #f1c40f;
+  --shadow: rgba(0, 0, 0, 0.5);
+}
+
+* {
+  box-sizing: border-box;
 }
 
 body {
@@ -19,91 +22,85 @@ body {
   color: var(--text);
   margin: 0;
   padding: 0;
-  min-height: 100vh;
   display: flex;
   flex-direction: column;
+  min-height: 100vh;
 }
 
-/* Header */
 header {
-  text-align: center;
-  padding: 1rem;
   background: var(--card-bg);
+  padding: 1rem;
+  text-align: center;
   box-shadow: 0 2px 6px var(--shadow);
 }
 
 header h1 {
-  font-size: 1.8rem;
   margin: 0;
+  font-size: 1.8rem;
 }
 
 header p {
-  color: #aaa;
-  font-size: 0.9rem;
-  margin: 0.3rem 0 0;
+  margin: 0.2rem 0 0;
+  color: var(--subtext);
+  font-size: 0.95rem;
 }
 
-/* Filter-Menü */
 .filter-container {
   display: flex;
   justify-content: center;
-  align-items: center;
   gap: 0.5rem;
   margin: 1rem 0;
 }
 
 #filterSelect {
-  padding: 0.4rem;
   background: var(--card-bg);
   color: var(--text);
   border: 1px solid var(--border);
+  padding: 0.4rem;
   border-radius: 5px;
-  outline: none;
   cursor: pointer;
 }
 
-#filterSelect:hover {
-  border-color: var(--accent);
-}
-
-/* Buttons */
 button {
   background: var(--accent);
   color: white;
   border: none;
   padding: 0.6rem 1rem;
-  margin: 0.5rem 0;
-  font-size: 0.95rem;
+  margin-top: 0.5rem;
   border-radius: 5px;
   cursor: pointer;
-  transition: 0.3s ease;
-  display: flex;
+  font-size: 0.95rem;
+  display: inline-flex;
   align-items: center;
   gap: 0.4rem;
+  transition: background 0.3s ease;
 }
 
 button:hover {
-  background: #019874;
+  background: #009f7a;
 }
 
-/* Hauptbereich */
 main {
   flex: 1;
-  padding: 1rem;
   max-width: 900px;
   margin: auto;
+  padding: 1rem;
 }
 
 section {
   margin-bottom: 2rem;
 }
 
-/* Match Container */
+h2 {
+  margin-bottom: 0.5rem;
+  font-size: 1.3rem;
+}
+
 .match-container {
   background: var(--card-bg);
   border: 1px solid var(--border);
   border-radius: 10px;
-  padding: 1rem;
+  padding: 0.8rem;
   box-shadow: 0 2px 8px var(--shadow);
 }
 
@@ -111,55 +108,29 @@ section {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.6rem 0;
   border-bottom: 1px solid var(--border);
+  padding: 0.6rem 0;
+  flex-wrap: wrap;
 }
 
 .match-card:last-child {
   border-bottom: none;
 }
 
-/* Teams & Infos */
 .match-teams {
   font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.match-info {
-  font-size: 0.9rem;
-  color: #aaa;
+  font-size: 1rem;
   display: flex;
   align-items: center;
   gap: 0.4rem;
 }
 
-/* Icons in Spielen */
-.icon-ball::before {
-  content: "⚽";
-}
-
-.icon-chart::before {
-  content: "📊";
-}
-
-.icon-clock::before {
-  content: "⏰";
-}
-
-.icon-fire::before {
-  content: "🔥";
-}
-
-.icon-money::before {
-  content: "💰";
-}
-
-/* Value Bets & Wahrscheinlichkeit */
-.value-bet {
-  color: var(--accent);
-  font-weight: bold;
+.match-info {
+  font-size: 0.9rem;
+  color: var(--subtext);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
 }
 
 .high-prob {
@@ -167,28 +138,43 @@ section {
   font-weight: bold;
 }
 
-/* Keine Spiele */
+.value-bet {
+  color: var(--accent);
+  font-weight: bold;
+}
+
 .no-matches {
   text-align: center;
+  color: var(--subtext);
   padding: 1rem;
-  color: #888;
 }
+
+/* Icons über CSS-Pseudo */
+.icon-ball::before { content: "⚽ "; }
+.icon-clock::before { content: "⏰ "; }
+.icon-chart::before { content: "📊 "; }
+.icon-money::before { content: "💰 "; }
 
 /* Footer */
 footer {
   background: var(--card-bg);
   text-align: center;
   padding: 0.8rem;
-  font-size: 0.9rem;
-  color: #aaa;
+  font-size: 0.85rem;
+  color: var(--subtext);
   border-top: 1px solid var(--border);
 }
 
-/* Responsive */
+/* Mobil */
 @media (max-width: 600px) {
   .match-card {
     flex-direction: column;
     text-align: center;
-    gap: 0.3rem;
+    align-items: flex-start;
+    gap: 0.4rem;
+  }
+
+  .match-info {
+    justify-content: flex-start;
   }
 }
