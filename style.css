@@ -44,3 +44,24 @@ select {
 .match span {
   font-size: 14px;
 }
+.bet-container {
+  background-color: #222;
+  padding: 8px;
+  margin-top: 8px;
+  border-radius: 5px;
+}
+
+.bet-container input {
+  width: 80px;
+  padding: 4px;
+  margin-right: 5px;
+  background-color: #111;
+  color: #fff;
+  border: 1px solid #555;
+  border-radius: 3px;
+}
+
+.bet-result {
+  color: #0f0;
+  font-weight: bold;
+}
