@@ -1,38 +1,31 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>JurijPower Pro</title>
-  <link rel="stylesheet" href="styles.css" />
+  <title>JurijPower Pro — Live ⚽</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <header>
-    <h1>JurijPower Pro — Live</h1>
-    <p class="subtitle">Live-Wetten Trends (Fußball)</p>
+    <h1>JurijPower Pro — Live ⚡</h1>
+    <p>Live-Wetten Trends (Fußball)</p>
+    <div class="controls">
+      <button id="refreshBtn">🔄 Aktualisieren</button>
+      <label for="leagueFilter">Filter Liga:</label>
+      <select id="leagueFilter">
+        <option value="all">Alle Ligen</option>
+      </select>
+    </div>
   </header>
 
   <main>
-    <!-- Login-Section wurde entfernt -->
-
-    <!-- App direkt sichtbar -->
-    <section id="appSection">
-      <div id="controls">
-        <button id="refreshBtn">Aktualisieren</button>
-        <label>
-          Filter Liga:
-          <select id="leagueFilter">
-            <option value="all">Alle Ligen</option>
-          </select>
-        </label>
-      </div>
-
-      <div id="liveContainer">
-        <div id="matchList"></div>
-      </div>
-      <div id="status" class="small"></div>
-    </section>
+    <div id="matchList" class="match-list"></div>
   </main>
+
+  <footer>
+    <p>🔥 Live-Daten powered by API-Football</p>
+  </footer>
 
   <script src="app.js"></script>
 </body>
