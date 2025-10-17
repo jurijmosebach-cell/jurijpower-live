@@ -1,176 +1,169 @@
-// ✅ Dein API Key (fertig eingetragen)
+// === ⚽ JurijPower Live Tool ===
+// API KEY
 const API_KEY = "c6ad1210c71b17cca24284ab8a9873b4";
 const BASE_URL = "https://v3.football.api-sports.io";
 
 const liveContainer = document.getElementById("live-matches");
 const upcomingContainer = document.getElementById("upcoming-matches");
+const comboContainer = document.getElementById("combo-container");
 const lastUpdate = document.getElementById("lastUpdate");
 
-// 📡 API abrufen
-async function fetchAPI(url) {
-  const headers = { "x-apisports-key": API_KEY };
-  const res = await fetch(url, { headers });
-  return res.json();
-}
+let comboQuotes = [];
 
-// 🟢 Live Spiele laden
+// === LIVE SPIELE HOLEN ===
 async function fetchMatches() {
-  const data = await fetchAPI(`${BASE_URL}/fixtures?live=all`);
+  const headers = { "x-apisports-key": API_KEY };
+  const url = `${BASE_URL}/fixtures?live=all`;
+  const res = await fetch(url, { headers });
+  const data = await res.json();
   return data.response;
 }
 
-// 🕓 Spiele in den nächsten 24h
+// === SPIELE NÄCHSTE 24H HOLEN ===
 async function fetchUpcoming() {
+  const headers = { "x-apisports-key": API_KEY };
   const now = new Date();
   const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-  const dateNow = now.toISOString().split("T")[0];
-  const dateTomorrow = tomorrow.toISOString().split("T")[0];
+  const todayStr = now.toISOString().split("T")[0];
+  const tomorrowStr = tomorrow.toISOString().split("T")[0];
 
-  const data = await fetchAPI(`${BASE_URL}/fixtures?from=${dateNow}&to=${dateTomorrow}`);
+  const url = `${BASE_URL}/fixtures?from=${todayStr}&to=${tomorrowStr}`;
+  const res = await fetch(url, { headers });
+  const data = await res.json();
   return data.response;
 }
 
-// ⚽ Statistiken abrufen (für Druckerkennung)
-async function fetchStats(fixtureId) {
-  const data = await fetchAPI(`${BASE_URL}/fixtures/statistics?fixture=${fixtureId}`);
-  return data.response;
-}
-
-// 🧮 Value berechnen (Wahrscheinlichkeit * Quote - 1)
-function calcValue(probability, quote) {
-  return (probability * quote - 1) * 100; // in %
-}
-
-// 🔥 Druckwahrscheinlichkeit ermitteln
-function estimateOverProbabilities(stats) {
-  let pressureScore = 0;
-  let over15 = 0.5; // Basiswahrscheinlichkeit
-  let over25 = 0.35;
-
-  if (stats.length > 0) {
-    const team1 = stats[0].statistics;
-    const team2 = stats[1].statistics;
-
-    const s1Shots = parseInt(team1.find(s => s.type === "Shots on Goal")?.value || 0);
-    const s2Shots = parseInt(team2.find(s => s.type === "Shots on Goal")?.value || 0);
-    const possession1 = parseInt(team1.find(s => s.type === "Ball Possession")?.value.replace('%','') || 0);
-    const possession2 = parseInt(team2.find(s => s.type === "Ball Possession")?.value.replace('%','') || 0);
-
-    pressureScore = s1Shots + s2Shots;
-
-    // Druckindikatoren
-    if (pressureScore >= 5) over15 += 0.15;
-    if (pressureScore >= 8) over15 += 0.25;
-
-    if (pressureScore >= 5) over25 += 0.15;
-    if (pressureScore >= 8) over25 += 0.25;
-
-    // Ballbesitz einbeziehen
-    if (possession1 > 60 || possession2 > 60) {
-      over15 += 0.1;
-      over25 += 0.1;
-    }
-  }
-
-  // Maximal 95%
-  return {
-    over15: Math.min(over15, 0.95),
-    over25: Math.min(over25, 0.95)
-  };
-}
-
-// 📊 Spiele darstellen
-function renderMatches(matches, container, isLive = false) {
+// === SPIELE DARSTELLEN ===
+function renderMatches(matches, container) {
   container.innerHTML = "";
-  matches.forEach(async match => {
+  matches.forEach((match, index) => {
     const home = match.teams.home.name;
     const away = match.teams.away.name;
     const league = match.league.name;
     const goalsHome = match.goals.home ?? 0;
     const goalsAway = match.goals.away ?? 0;
     const status = match.fixture.status.short;
-    const fixtureId = match.fixture.id;
-
-    let over15Prob = 0.55;
-    let over25Prob = 0.40;
-    let over15Val = 0;
-    let over25Val = 0;
-
-    if (isLive) {
-      const stats = await fetchStats(fixtureId);
-      const prob = estimateOverProbabilities(stats);
-      over15Prob = prob.over15;
-      over25Prob = prob.over25;
-
-      // Beispielquote — kann später dynamisch durch API ersetzt werden
-      const quote15 = 1.60;
-      const quote25 = 2.20;
-      over15Val = calcValue(over15Prob, quote15);
-      over25Val = calcValue(over25Prob, quote25);
-    }
+    const time = new Date(match.fixture.date).toLocaleString();
 
     const card = document.createElement("div");
     card.className = "match-card";
     card.innerHTML = `
       <h3>${home} vs ${away}</h3>
-      <p>🏆 ${league} | 🕒 ${status} | ${goalsHome} : ${goalsAway}</p>
-      ${
-        isLive
-          ? `
-      <div>
-        <p>📊 Over 1.5 Value: 
-          <span style="color:${over15Val>0?'limegreen':'red'}">
-            ${over15Val.toFixed(1)}%
-          </span>
-        </p>
-        <p>📊 Over 2.5 Value: 
-          <span style="color:${over25Val>0?'limegreen':'red'}">
-            ${over25Val.toFixed(1)}%
-          </span>
-        </p>
-      </div>
-      `
-          : ""
-      }
-      <div>
+      <p>🏆 ${league}<br>🕒 ${status} | ${time}<br>⚽ ${goalsHome} : ${goalsAway}</p>
+      <div class="inputs">
         💶 Einsatz: <input type="number" class="einsatz" placeholder="€" />
         📈 Quote: <input type="number" class="quote" placeholder="z.B. 2.50" step="0.01" />
-        🪙 Gewinn: <span class="gewinn">0 €</span>
+        📊 Value %: <input type="number" class="value" placeholder="z.B. 55" step="0.1" />
+      </div>
+      <div>
+        🪙 Gewinn: <span class="gewinn">0 €</span><br>
+        <button class="add-combo">+ Kombi</button>
       </div>
     `;
     container.appendChild(card);
 
     const einsatz = card.querySelector(".einsatz");
     const quote = card.querySelector(".quote");
+    const value = card.querySelector(".value");
     const gewinn = card.querySelector(".gewinn");
+    const addCombo = card.querySelector(".add-combo");
 
+    // Einzelgewinn
     const calc = () => {
       const e = parseFloat(einsatz.value) || 0;
       const q = parseFloat(quote.value) || 0;
-      gewinn.textContent = (e * q).toFixed(2) + " €";
+      const val = parseFloat(value.value) || 0;
+      const g = e * q;
+      gewinn.textContent = g.toFixed(2) + " €";
+
+      if (val > 0 && q > 0) {
+        // Value % Berechnung (vereinfacht)
+        const fairQuote = 100 / val;
+        if (q > fairQuote) {
+          card.style.border = "2px solid limegreen"; // Value Bet ✅
+        } else {
+          card.style.border = "2px solid red"; // kein Value ❌
+        }
+      } else {
+        card.style.border = "1px solid #444";
+      }
     };
 
     einsatz.addEventListener("input", calc);
     quote.addEventListener("input", calc);
+    value.addEventListener("input", calc);
+
+    // Kombi hinzufügen
+    addCombo.addEventListener("click", () => {
+      const q = parseFloat(quote.value);
+      if (!q || comboQuotes.length >= 10) return;
+      comboQuotes.push(q);
+      renderCombo();
+    });
   });
 }
 
-// 🔄 Daten aktualisieren
+// === KOMBIWETTE ===
+function renderCombo() {
+  comboContainer.innerHTML = "";
+  if (comboQuotes.length === 0) return;
+
+  const totalQuote = comboQuotes.reduce((acc, q) => acc * q, 1);
+  const einsatzInput = document.createElement("input");
+  einsatzInput.type = "number";
+  einsatzInput.placeholder = "Einsatz (€)";
+
+  const resultText = document.createElement("div");
+  resultText.textContent = `Gesamtquote: ${totalQuote.toFixed(2)}`;
+
+  einsatzInput.addEventListener("input", () => {
+    const einsatz = parseFloat(einsatzInput.value) || 0;
+    const gewinn = einsatz * totalQuote;
+    resultText.textContent = `Gesamtquote: ${totalQuote.toFixed(2)} | Gewinn: ${gewinn.toFixed(2)} €`;
+  });
+
+  const clearBtn = document.createElement("button");
+  clearBtn.textContent = "🧹 Kombi löschen";
+  clearBtn.addEventListener("click", () => {
+    comboQuotes = [];
+    renderCombo();
+  });
+
+  comboContainer.appendChild(einsatzInput);
+  comboContainer.appendChild(resultText);
+  comboContainer.appendChild(clearBtn);
+}
+
+// === PUSH-NOTIFICATION ===
+function sendGoalNotification(home, away, score) {
+  if (Notification.permission === "granted" && navigator.serviceWorker) {
+    navigator.serviceWorker.getRegistration().then(reg => {
+      if (reg) {
+        reg.showNotification("⚽ TOR!", {
+          body: `${home} vs ${away}\nSpielstand: ${score}`,
+          icon: "icon.png"
+        });
+      }
+    });
+  }
+}
+
+// === DATEN AKTUALISIEREN ===
 async function updateData() {
   try {
-    const [liveMatches, upcomingMatches] = await Promise.all([fetchMatches(), fetchUpcoming()]);
-    renderMatches(liveMatches, liveContainer, true);
-    renderMatches(upcomingMatches, upcomingContainer, false);
+    const liveMatches = await fetchMatches();
+    const upcomingMatches = await fetchUpcoming();
+    renderMatches(liveMatches, liveContainer);
+    renderMatches(upcomingMatches, upcomingContainer);
     lastUpdate.textContent = new Date().toLocaleTimeString();
   } catch (err) {
     console.error("API Fehler:", err);
   }
 }
 
-// 🔘 Refresh Button
 document.getElementById("refreshButton").addEventListener("click", updateData);
 
-// 📢 Notifications aktivieren
+// === SERVICE WORKER REGISTRIEREN ===
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("service-worker.js");
 }
