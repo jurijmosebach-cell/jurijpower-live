@@ -1,80 +1,63 @@
+
 const apiKey = "c6ad1210c71b17cca24284ab8a9873b4";
+const apiUrl = "https://v3.football.api-sports.io/fixtures";
 
 const matchList = document.getElementById("matchList");
-const refreshBtn = document.getElementById("refreshBtn");
-const leagueFilter = document.getElementById("leagueFilter");
 const upcomingMatchList = document.getElementById("upcomingMatchList");
+const leagueFilter = document.getElementById("leagueFilter");
 const upcomingLeagueFilter = document.getElementById("upcomingLeagueFilter");
+const lastUpdate = document.getElementById("lastUpdate");
+const debugOutput = document.getElementById("debugOutput");
+const goalSound = document.getElementById("goalSound");
 
-// 🧪 Debug-Anzeige
-const debugDiv = document.createElement("div");
-debugDiv.style.padding = "10px";
-debugDiv.style.fontSize = "12px";
-debugDiv.style.color = "#0f0";
-debugDiv.style.backgroundColor = "#111";
-debugDiv.innerText = "🧪 Debug aktiv – warte auf Antwort…";
-document.body.appendChild(debugDiv);
-
-// 🕒 Letztes Update
-const updateDiv = document.createElement("div");
-updateDiv.style.padding = "10px";
-updateDiv.style.fontSize = "12px";
-updateDiv.style.color = "#bbb";
-updateDiv.style.backgroundColor = "#000";
-updateDiv.style.textAlign = "center";
-updateDiv.innerText = "Letztes Update: –";
-document.body.appendChild(updateDiv);
-
-// 🔔 Toralarm
-const goalSound = new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");
-if ("Notification" in window) {
-  Notification.requestPermission().then(permission => {
-    console.log("Push Berechtigung:", permission);
-  });
-}
-
-// 🧠 Speicher
 let previousScores = {};
-let upcomingTimers = {};
 let upcomingMatchesCache = [];
 let liveMatchesCache = [];
+let upcomingTimers = {};
 
-// ===================== LIVE =====================
+Notification.requestPermission();
 
 async function fetchMatches() {
-  matchList.innerHTML = "⏳ Lade Live-Daten...";
-  debugDiv.innerText = "⏳ Anfrage an API gesendet...";
   try {
-    const res = await fetch("https://v3.football.api-sports.io/fixtures?live=all", {
+    const response = await fetch(`${apiUrl}?live=all`, {
       headers: { "x-apisports-key": apiKey }
     });
-    const data = await res.json();
-    console.log("Live Daten:", data);
+    const data = await response.json();
     liveMatchesCache = data.response;
-
-    debugDiv.innerText = `✅ Antwort empfangen: ${liveMatchesCache?.length || 0} Spiele`;
-    updateDiv.innerText = `Letztes Update: ${new Date().toLocaleTimeString()}`;
-
-    if (!liveMatchesCache || liveMatchesCache.length === 0) {
-      matchList.innerHTML = "⚽ Keine Live-Spiele aktuell.";
-      return;
-    }
-
-    const leagues = [...new Set(liveMatchesCache.map(m => m.league.name))];
-    leagueFilter.innerHTML = `<option value="all">Alle Ligen</option>`;
-    leagues.forEach(league => {
-      const opt = document.createElement("option");
-      opt.value = league;
-      opt.textContent = league;
-      leagueFilter.appendChild(opt);
-    });
-
     renderMatches(liveMatchesCache);
-  } catch (error) {
-    matchList.innerHTML = "❌ Fehler beim Laden.";
-    debugDiv.innerText = "❌ API-Fehler — siehe Konsole!";
-    console.error(error);
+    fillLeagueFilter(liveMatchesCache, leagueFilter);
+    lastUpdate.textContent = new Date().toLocaleTimeString();
+    debugOutput.textContent = `✅ Antwort empfangen: ${liveMatchesCache.length} Spiele`;
+  } catch (err) {
+    debugOutput.textContent = `❌ API Fehler: ${err.message}`;
   }
+}
+
+async function fetchUpcomingMatches() {
+  try {
+    const from = new Date();
+    const to = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    const response = await fetch(`${apiUrl}?from=${from.toISOString().split('T')[0]}&to=${to.toISOString().split('T')[0]}`, {
+      headers: { "x-apisports-key": apiKey }
+    });
+    const data = await response.json();
+    upcomingMatchesCache = data.response;
+    renderUpcomingMatches(upcomingMatchesCache);
+    fillLeagueFilter(upcomingMatchesCache, upcomingLeagueFilter);
+  } catch (err) {
+    console.log("Fehler Upcoming:", err);
+  }
+}
+
+function fillLeagueFilter(matches, dropdown) {
+  const leagues = [...new Set(matches.map(m => m.league.name))];
+  dropdown.innerHTML = `<option value="all">Alle Ligen</option>`;
+  leagues.forEach(l => {
+    const option = document.createElement("option");
+    option.value = l;
+    option.textContent = l;
+    dropdown.appendChild(option);
+  });
 }
 
 function renderMatches(matches) {
@@ -93,11 +76,18 @@ function renderMatches(matches) {
     const div = document.createElement("div");
     div.classList.add("match");
     div.setAttribute("data-id", id);
+
     div.innerHTML = `
       <h2>${home} vs ${away}</h2>
       <p>🏆 ${league} | ⏱️ ${time || 0}' | 🔢 ${score}</p>
+      <div class="bet-container">
+        <label>💶 Einsatz: <input type="number" id="einsatz-${id}" placeholder="€"></label>
+        <label>📈 Quote: <input type="number" step="0.01" id="quote-${id}" placeholder="z.B. 2.50"></label>
+        <p>💰 Potenzieller Gewinn: <span id="gewinn-${id}" class="bet-result">0 €</span></p>
+      </div>
     `;
 
+    // Toralarm
     const prev = previousScores[id];
     if (prev && prev !== score) {
       div.style.animation = "blink 1s ease-in-out 3";
@@ -109,49 +99,25 @@ function renderMatches(matches) {
         });
       }
     }
-
     previousScores[id] = score;
+
     matchList.appendChild(div);
-  });
-}
 
-// ===================== KOMMENDE SPIELE =====================
+    // Value Berechnung
+    const einsatzInput = div.querySelector(`#einsatz-${id}`);
+    const quoteInput = div.querySelector(`#quote-${id}`);
+    const gewinnSpan = div.querySelector(`#gewinn-${id}`);
 
-async function fetchUpcomingMatches() {
-  upcomingMatchList.innerHTML = "⏳ Lade kommende Spiele...";
-  try {
-    const now = new Date();
-    const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-    const from = now.toISOString().split("T")[0];
-    const to = tomorrow.toISOString().split("T")[0];
-
-    const res = await fetch(`https://v3.football.api-sports.io/fixtures?from=${from}&to=${to}`, {
-      headers: { "x-apisports-key": apiKey }
-    });
-    const data = await res.json();
-    upcomingMatchesCache = data.response;
-
-    console.log("Kommende Spiele:", upcomingMatchesCache);
-
-    if (!upcomingMatchesCache || upcomingMatchesCache.length === 0) {
-      upcomingMatchList.innerHTML = "📭 Keine Spiele in den nächsten 24 Stunden.";
-      return;
+    function calcGewinn() {
+      const einsatz = parseFloat(einsatzInput.value) || 0;
+      const quote = parseFloat(quoteInput.value) || 0;
+      const gewinn = (einsatz * quote).toFixed(2);
+      gewinnSpan.textContent = `${gewinn} €`;
     }
 
-    const leagues = [...new Set(upcomingMatchesCache.map(m => m.league.name))];
-    upcomingLeagueFilter.innerHTML = `<option value="all">Alle Ligen</option>`;
-    leagues.forEach(league => {
-      const opt = document.createElement("option");
-      opt.value = league;
-      opt.textContent = league;
-      upcomingLeagueFilter.appendChild(opt);
-    });
-
-    renderUpcomingMatches(upcomingMatchesCache);
-  } catch (error) {
-    upcomingMatchList.innerHTML = "❌ Fehler beim Laden.";
-    console.error(error);
-  }
+    einsatzInput.addEventListener("input", calcGewinn);
+    quoteInput.addEventListener("input", calcGewinn);
+  });
 }
 
 function renderUpcomingMatches(matches) {
@@ -182,6 +148,7 @@ function renderUpcomingMatches(matches) {
     upcomingMatchList.appendChild(div);
 
     if (upcomingTimers[id]) clearInterval(upcomingTimers[id]);
+
     upcomingTimers[id] = setInterval(() => {
       const now = new Date();
       const diff = startTime - now;
@@ -205,43 +172,26 @@ function renderUpcomingMatches(matches) {
   });
 }
 
-// ===================== ALARM =====================
-
 function triggerPreMatchAlarm(home, away, league, startTime) {
-  const matchInfo = `${home} vs ${away} (${league})`;
-  goalSound.play().catch(err => console.warn("Ton konnte nicht abgespielt werden", err));
+  goalSound.play().catch(() => {});
   if (Notification.permission === "granted") {
     new Notification("⏳ Spiel startet bald!", {
-      body: `${matchInfo}\nAnpfiff um ${startTime.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}`,
+      body: `${home} vs ${away} (${league})\nAnpfiff um ${startTime.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}`,
       icon: "https://cdn-icons-png.flaticon.com/512/51/51767.png"
     });
   }
-  console.log("⏳ Alarm 5 Minuten vor Spielbeginn für:", matchInfo);
 }
-
-// ===================== AUTOMATISCH IN LIVE VERSCHIEBEN =====================
 
 function moveToLive(matchId) {
   const match = upcomingMatchesCache.find(m => m.fixture.id === matchId);
   if (!match) return;
-
   upcomingMatchesCache = upcomingMatchesCache.filter(m => m.fixture.id !== matchId);
   liveMatchesCache.push(match);
-
-  console.log(`📡 ${match.teams.home.name} vs ${match.teams.away.name} ist jetzt LIVE`);
-
   renderUpcomingMatches(upcomingMatchesCache);
   renderMatches(liveMatchesCache);
 }
 
-// ===================== START =====================
-
-refreshBtn.addEventListener("click", fetchMatches);
-leagueFilter.addEventListener("change", () => renderMatches(liveMatchesCache));
-upcomingLeagueFilter.addEventListener("change", () => renderUpcomingMatches(upcomingMatchesCache));
-
 fetchMatches();
 fetchUpcomingMatches();
-
-setInterval(fetchMatches, 30000); // Live alle 30 Sek
-setInterval(fetchUpcomingMatches, 120000); // Upcoming alle 2 Min
+setInterval(fetchMatches, 60000);
+setInterval(fetchUpcomingMatches, 120000);
