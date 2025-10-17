@@ -1,13 +1,9 @@
-self.addEventListener('install', (e) => {
-  console.log('Service Worker installiert');
-  e.waitUntil(caches.open('jurijpower-v1').then((cache) => cache.addAll([
-    './',
-    './index.html',
-    './style.css',
-    './script.js'
-  ])));
+self.addEventListener("install", e => {
+  console.log("Service Worker installiert");
 });
 
-self.addEventListener('fetch', (e) => {
-  e.respondWith(caches.match(e.request).then((response) => response || fetch(e.request)));
+self.addEventListener("activate", e => {
+  console.log("Service Worker aktiviert");
 });
+
+self.addEventListener("fetch", () => {});
