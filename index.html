@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>JurijPower Pro — Live</title>
   <link rel="stylesheet" href="style.css" />
-  <link rel="manifest" href="manifest.json" />
 </head>
 <body>
   <header>
@@ -13,23 +12,27 @@
     <p>Live-Wetten Trends (Fußball)</p>
   </header>
 
-  <section id="live-section">
-    <div>
-      <label for="leagueFilter">🏆 Liga:</label>
-      <select id="leagueFilter">
+  <section>
+    <div class="controls">
+      🏆 Liga:
+      <select id="league-filter">
         <option value="">Alle Ligen</option>
       </select>
       <button id="refreshButton">🔄 Aktualisieren</button>
     </div>
+
+    <h2>📡 Live Spiele</h2>
     <div id="live-matches"></div>
   </section>
 
-  <section id="upcoming-section">
+  <section>
     <h2>⏳ Kommende Spiele (24h)</h2>
-    <label for="upcomingLeagueFilter">🏆 Liga:</label>
-    <select id="upcomingLeagueFilter">
-      <option value="">Alle Ligen</option>
-    </select>
+    <div class="controls">
+      🏆 Liga:
+      <select id="league-filter-upcoming">
+        <option value="">Alle Ligen</option>
+      </select>
+    </div>
     <div id="upcoming-matches"></div>
   </section>
 
