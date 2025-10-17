@@ -1,25 +1,40 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>JurijPower Live ⚽</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <h1>⚽ JurijPower Live</h1>
+  <header>
+    <h1>⚽ JurijPower Live Tool</h1>
+  </header>
 
-  <!-- LIVE SPIELE -->
-  <h2>🟢 Live-Spiele</h2>
-  <button id="refreshBtn">🔄 Aktualisieren</button>
-  <select id="leagueFilter"></select>
-  <div id="matchList"></div>
+  <section>
+    <h2>🟢 Live Spiele</h2>
+    <label>🏆 Liga:</label>
+    <select id="leagueFilter">
+      <option value="all">Alle Ligen</option>
+    </select>
+    <div id="matchList"></div>
+  </section>
 
-  <!-- Kommende Spiele -->
-  <h2 style="margin-top: 20px;">🕒 Kommende Spiele (nächste 24 Stunden)</h2>
-  <select id="upcomingLeagueFilter"></select>
-  <div id="upcomingMatchList"></div>
+  <section>
+    <h2>⏳ Kommende Spiele (24h)</h2>
+    <label>🏆 Liga:</label>
+    <select id="upcomingLeagueFilter">
+      <option value="all">Alle Ligen</option>
+    </select>
+    <div id="upcomingMatchList"></div>
+  </section>
 
+  <footer>
+    <p>🕒 Letztes Update: <span id="lastUpdate">-</span></p>
+    <p id="debugOutput"></p>
+  </footer>
+
+  <audio id="goalSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" preload="auto"></audio>
   <script src="app.js"></script>
 </body>
 </html>
