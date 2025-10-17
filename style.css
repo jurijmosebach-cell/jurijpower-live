@@ -1,191 +1,127 @@
-/* === ⚽ JurijPower Pro - Style.css === */
-
-:root {
-  --bg: #0d0d0d;
-  --card-bg: #1c1c1c;
-  --border: #333;
-  --text: #f5f5f5;
-  --subtext: #999;
-  --accent: #00b894;
-  --danger: #e74c3c;
-  --warning: #f1c40f;
-  --shadow: rgba(0, 0, 0, 0.5);
-}
-
-* {
-  box-sizing: border-box;
-}
-
+/* === Grundlayout === */
 body {
-  font-family: "Segoe UI", Tahoma, sans-serif;
-  background: var(--bg);
-  color: var(--text);
+  font-family: Arial, sans-serif;
+  background: #121212;
+  color: #f5f5f5;
   margin: 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
 }
 
 header {
-  background: var(--card-bg);
-  padding: 1rem;
+  background: #1f1f1f;
+  padding: 15px;
   text-align: center;
-  box-shadow: 0 2px 6px var(--shadow);
+  border-bottom: 2px solid #333;
 }
 
-header h1 {
+h1 {
   margin: 0;
-  font-size: 1.8rem;
+  font-size: 1.8em;
 }
 
-header p {
-  margin: 0.2rem 0 0;
-  color: var(--subtext);
-  font-size: 0.95rem;
+.controls {
+  margin-top: 10px;
 }
 
-.filter-container {
-  display: flex;
-  justify-content: center;
-  gap: 0.5rem;
-  margin: 1rem 0;
-}
-
-#filterSelect {
-  background: var(--card-bg);
-  color: var(--text);
-  border: 1px solid var(--border);
-  padding: 0.4rem;
-  border-radius: 5px;
-  cursor: pointer;
-}
-
-button {
-  background: var(--accent);
-  color: white;
+select, button {
+  background: #2a2a2a;
+  color: #f5f5f5;
   border: none;
-  padding: 0.6rem 1rem;
-  margin-top: 0.5rem;
-  border-radius: 5px;
+  padding: 8px 12px;
+  margin: 0 5px;
   cursor: pointer;
-  font-size: 0.95rem;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  transition: background 0.3s ease;
+  font-size: 1em;
+  border-radius: 4px;
 }
 
 button:hover {
-  background: #009f7a;
+  background: #333;
 }
 
 main {
-  flex: 1;
-  max-width: 900px;
-  margin: auto;
-  padding: 1rem;
+  padding: 20px;
 }
 
 section {
-  margin-bottom: 2rem;
+  margin-bottom: 40px;
 }
 
 h2 {
-  margin-bottom: 0.5rem;
-  font-size: 1.3rem;
+  margin-bottom: 10px;
+  font-size: 1.4em;
 }
 
+/* === Matchcards === */
 .match-container {
-  background: var(--card-bg);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 0.8rem;
-  box-shadow: 0 2px 8px var(--shadow);
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 15px;
 }
 
 .match-card {
+  background: #1f1f1f;
+  padding: 15px;
+  border-radius: 8px;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid var(--border);
-  padding: 0.6rem 0;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 6px;
+  position: relative;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.match-card:last-child {
-  border-bottom: none;
+.match-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 10px #222;
 }
 
 .match-teams {
-  font-weight: 600;
-  font-size: 1rem;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
+  font-weight: bold;
+  font-size: 1.1em;
 }
 
 .match-info {
-  font-size: 0.9rem;
-  color: var(--subtext);
+  font-size: 0.95em;
   display: flex;
-  align-items: center;
-  gap: 0.4rem;
+  justify-content: space-between;
 }
 
-.high-prob {
-  color: var(--warning);
-  font-weight: bold;
+/* === Blinkeffekt bei hoher Wahrscheinlichkeit === */
+.blink {
+  animation: blink 1s infinite;
+  border-left: 4px solid #e74c3c;
+}
+@keyframes blink {
+  50% { border-color: transparent; }
 }
 
-.value-bet {
-  color: var(--accent);
-  font-weight: bold;
+/* === Value-Bet Hervorhebung === */
+.value-highlight-green {
+  border-left: 5px solid #27ae60;
+  box-shadow: 0 0 10px #27ae60;
 }
 
+.value-highlight-orange {
+  border-left: 5px solid #f39c12;
+  box-shadow: 0 0 10px #f39c12;
+}
+
+.value-highlight-red {
+  border-left: 5px solid #e74c3c;
+  box-shadow: 0 0 10px #e74c3c;
+}
+
+/* === Keine Spiele === */
 .no-matches {
   text-align: center;
-  color: var(--subtext);
-  padding: 1rem;
+  opacity: 0.7;
+  padding: 20px;
 }
 
-/* Icons über CSS-Pseudo */
-.icon-ball::before { content: "⚽ "; }
-.icon-clock::before { content: "⏰ "; }
-.icon-chart::before { content: "📊 "; }
-.icon-money::before { content: "💰 "; }
-
-/* Footer */
 footer {
-  background: var(--card-bg);
+  background: #1f1f1f;
   text-align: center;
-  padding: 0.8rem;
-  font-size: 0.85rem;
-  color: var(--subtext);
-  border-top: 1px solid var(--border);
+  padding: 15px;
+  font-size: 0.9em;
+  color: #888;
+  border-top: 2px solid #333;
 }
-
-/* Mobil */
-@media (max-width: 600px) {
-  .match-card {
-    flex-direction: column;
-    text-align: center;
-    align-items: flex-start;
-    gap: 0.4rem;
-  }
-
-  .match-info {
-    justify-content: flex-start;
-  }
-}
-/* === Alarm bei hoher Torwahrscheinlichkeit === */
-.blink {
-  animation: blinkEffect 1s linear infinite;
-  border-left: 5px solid #f1c40f;
-}
-
-@keyframes blinkEffect {
-  0% { background-color: #1c1c1c; }
-  50% { background-color: #2e2e00; }
-  100% { background-color: #1c1c1c; }
-    }
