@@ -1,120 +1,93 @@
 body {
-  background: #121212;
-  color: #fff;
   font-family: Arial, sans-serif;
+  background: #fff;
+  color: #000;
   margin: 0;
-  padding: 0;
-}
-
-header {
-  text-align: center;
   padding: 20px;
-  background: #1e1e1e;
 }
 
 h1, h2 {
-  margin: 0 0 10px;
+  margin-top: 20px;
 }
 
 .controls {
-  margin: 10px 0;
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
 }
 
 button {
-  padding: 8px 12px;
-  background: #27ae60;
-  color: #fff;
-  border: none;
   cursor: pointer;
+  padding: 5px 10px;
+  background: #007bff;
+  color: white;
+  border: none;
   border-radius: 5px;
 }
 
 button:hover {
-  background: #2ecc71;
-}
-
-.match-container {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 15px;
+  background: #0056b3;
 }
 
 .match-card {
-  background: #1f1f1f;
+  border: 1px solid #ddd;
   padding: 10px;
-  border-radius: 6px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  margin: 8px 0;
+  border-radius: 5px;
+  background: #f8f8f8;
+}
+
+.match-teams {
+  font-weight: bold;
 }
 
 .match-info {
-  display: flex;
-  flex-direction: column;
-  text-align: right;
+  font-size: 0.9em;
 }
 
-.blink {
-  animation: blink 1s infinite;
-}
-
-@keyframes blink {
-  50% { background: #2e2e2e; }
-}
-
-.value-highlight-green {
-  border-left: 5px solid #27ae60;
-}
-
-.value-highlight-orange {
-  border-left: 5px solid #e67e22;
-}
-
-.value-highlight-red {
-  border-left: 5px solid #e74c3c;
-}
-
-.combo-box {
-  background: #1f1f1f;
-  padding: 15px;
-  border-radius: 8px;
-  margin-top: 10px;
-  box-shadow: 0 0 10px #333;
-}
-
-.combo-item {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 5px;
-}
-
-.combo-total {
+.high-prob {
   font-weight: bold;
+  color: red;
+}
+
+#combo-box {
+  background: #222;
+  color: #0f0;
+  padding: 10px;
+  border-radius: 5px;
   margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid #444;
-  display: flex;
-  justify-content: space-between;
 }
 
-.combo-highlight {
-  color: #27ae60;
+#combo-box ul {
+  list-style: none;
+  padding: 0;
 }
 
-.copy-btn {
-  margin-top: 10px;
-  width: 100%;
-  background: #2980b9;
+#combo-box li {
+  font-size: 0.9em;
 }
 
-.copy-btn:hover {
-  background: #3498db;
+#combo-box button {
+  background: #28a745;
 }
 
-.copy-message {
-  text-align: center;
-  margin-top: 5px;
-  font-size: 14px;
-  color: #2ecc71;
+.no-matches {
+  color: #888;
+}
+
+#errorBox {
+  color: red;
+  font-weight: bold;
+}
+
+/* === Blinkeffekt bei hoher Wahrscheinlichkeit === */
+.blink {
+  animation: blinkEffect 1s linear infinite;
+  border-left: 5px solid #f1c40f;
+}
+
+@keyframes blinkEffect {
+  0% { background-color: #f8f8f8; }
+  50% { background-color: #ffb703; }
+  100% { background-color: #f8f8f8; }
 }
