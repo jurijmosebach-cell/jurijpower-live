@@ -7,12 +7,25 @@ const BASE_URL = "https://v3.football.api-sports.io";
 const liveContainer = document.getElementById("live-matches");
 const lastUpdate = document.getElementById("lastUpdate");
 
+// === TEST-FIXTURE (wenn keine Live-Spiele laufen) ===
+const TEST_FIXTURE_ID = 1035059; // Beispiel-ID eines echten Spiels
+let useTestFixture = true;       // <- auf true lassen zum Testen
+
 // === LIVE SPIELE HOLEN ===
 async function fetchMatches() {
   const headers = { "x-apisports-key": API_KEY };
-  const url = `${BASE_URL}/fixtures?live=all`;
+  let url = `${BASE_URL}/fixtures?live=all`;
   const res = await fetch(url, { headers });
   const data = await res.json();
+
+  // Wenn keine Live-Spiele gefunden → Test-FIXTURE laden
+  if (data.response.length === 0 && useTestFixture) {
+    const testUrl = `${BASE_URL}/fixtures?id=${TEST_FIXTURE_ID}`;
+    const testRes = await fetch(testUrl, { headers });
+    const testData = await testRes.json();
+    return testData.response;
+  }
+
   return data.response;
 }
 
@@ -99,8 +112,8 @@ async function renderLiveMatches() {
   for (const match of matches) {
     const fixtureId = match.fixture.id;
     const stats = await fetchStats(fixtureId);
+    if (!stats || stats.length < 2) continue;
 
-    if (stats.length < 2) continue;
     const statsA = stats[0].statistics;
     const statsB = stats[1].statistics;
 
@@ -108,7 +121,7 @@ async function renderLiveMatches() {
     const teamB = match.teams.away.name;
     const goalsA = match.goals.home;
     const goalsB = match.goals.away;
-    const minute = match.fixture.status.elapsed;
+    const minute = match.fixture.status.elapsed || 0;
 
     const prob = calculateProbabilities(statsA, statsB, goalsA, goalsB, minute);
 
