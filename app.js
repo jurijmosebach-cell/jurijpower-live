@@ -1,79 +1,48 @@
-// === ⚽ JurijPower Live Tool – PRO Version ===
-// Mit Ligenfilter, Live-Spielen, kommenden Spielen (48h) & Wahrscheinlichkeiten
-
-// === API KEY ===
+// === ⚽ JurijPower Live Tool – PRO Version mit Value Bets & Filter ===
 const API_KEY = "c6ad1210c71b17cca24284ab8a9873b4";
 const BASE_URL = "https://v3.football.api-sports.io";
 
-// === FAVORITEN-LIGEN (IDs + Name) ===
-const FAVORITE_LEAGUES = [
-  { id: 78, name: "Bundesliga 1 🇩🇪" },
-  { id: 79, name: "Bundesliga 2 🇩🇪" },
-  { id: 39, name: "Premier League 🏴" },
-  { id: 135, name: "Serie A 🇮🇹" },
-  { id: 140, name: "La Liga 🇪🇸" },
-  { id: 61, name: "Ligue 1 🇫🇷" },
-  { id: 41, name: "Superligaen 🇩🇰" }
-];
+// Favoriten-Ligen (ID laut API-Football)
+const FAVORITE_LEAGUES = [78, 79, 39, 135, 140, 61, 208]; 
+// Bundesliga 1, 2, Premier League, Serie A, La Liga, Ligue 1, Superligaen
 
-let activeLeagues = FAVORITE_LEAGUES.map(l => l.id);
-
-// === HTML Elemente ===
-const leagueFilter = document.getElementById("league-filter");
+// HTML Elemente
 const liveContainer = document.getElementById("live-matches");
 const upcomingContainer = document.getElementById("upcoming-matches");
 const lastUpdate = document.getElementById("lastUpdate");
+const filterSelect = document.getElementById("filterSelect");
 
-// === LIGENFILTER AUFBAUEN ===
-function buildLeagueFilter() {
-  FAVORITE_LEAGUES.forEach(league => {
-    const wrapper = document.createElement("label");
-    wrapper.className = "league-checkbox";
-    wrapper.innerHTML = `
-      <input type="checkbox" value="${league.id}" checked>
-      <span>${league.name}</span>
-    `;
-    wrapper.querySelector("input").addEventListener("change", (e) => {
-      const id = parseInt(e.target.value);
-      if (e.target.checked) {
-        activeLeagues.push(id);
-      } else {
-        activeLeagues = activeLeagues.filter(l => l !== id);
-      }
-      updateAll();
-    });
-    leagueFilter.appendChild(wrapper);
-  });
-}
-
-// === LIVE SPIELE HOLEN ===
-async function fetchMatches() {
+// === API Funktionen ===
+async function fetchMatches(filter = "all") {
   const headers = { "x-apisports-key": API_KEY };
-  const url = `${BASE_URL}/fixtures?live=all`;
-  const res = await fetch(url, { headers });
-  const data = await res.json();
-  return data.response.filter(m => activeLeagues.includes(m.league.id));
-}
+  let url = `${BASE_URL}/fixtures?live=all`;
 
-// === KOMMENDE SPIELE HOLEN (48h) ===
-async function fetchUpcomingMatches() {
-  const headers = { "x-apisports-key": API_KEY };
-
-  const today = new Date();
-  const to48h = new Date();
-  to48h.setDate(today.getDate() + 2);
-
-  const fromDate = today.toISOString().split("T")[0];
-  const toDate = to48h.toISOString().split("T")[0];
-
-  const url = `${BASE_URL}/fixtures?from=${fromDate}&to=${toDate}`;
   const res = await fetch(url, { headers });
   const data = await res.json();
 
-  return data.response.filter(m => activeLeagues.includes(m.league.id));
+  if (filter === "favorites") {
+    return data.response.filter(m => FAVORITE_LEAGUES.includes(m.league.id));
+  }
+  return data.response;
 }
 
-// === STATISTIKEN HOLEN ===
+async function fetchUpcoming(filter = "all") {
+  const headers = { "x-apisports-key": API_KEY };
+  const now = new Date();
+  const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+  const from = now.toISOString().split("T")[0];
+  const to = tomorrow.toISOString().split("T")[0];
+  let url = `${BASE_URL}/fixtures?from=${from}&to=${to}`;
+
+  const res = await fetch(url, { headers });
+  const data = await res.json();
+
+  if (filter === "favorites") {
+    return data.response.filter(m => FAVORITE_LEAGUES.includes(m.league.id));
+  }
+  return data.response;
+}
+
 async function fetchStats(fixtureId) {
   const headers = { "x-apisports-key": API_KEY };
   const url = `${BASE_URL}/fixtures/statistics?fixture=${fixtureId}`;
@@ -82,153 +51,117 @@ async function fetchStats(fixtureId) {
   return data.response;
 }
 
-// === WAHRSCHEINLICHKEITEN BERECHNEN ===
+// === Berechnung Torwahrscheinlichkeit & Value Bets ===
 function calculateProbabilities(statsA, statsB, scoreA, scoreB, minute) {
-  let shotsA = 0, shotsB = 0;
-  let possessionA = 50, possessionB = 50;
+  const getVal = (arr, type) => {
+    const s = arr.find(x => x.type === type);
+    return s ? parseInt(s.value) : 0;
+  };
 
-  const statA = statsA.find(s => s.type === "Shots on Goal");
-  const statB = statsB.find(s => s.type === "Shots on Goal");
-  const posA = statsA.find(s => s.type === "Ball Possession");
-  const posB = statsB.find(s => s.type === "Ball Possession");
-
-  if (statA) shotsA = statA.value;
-  if (statB) shotsB = statB.value;
-  if (posA) possessionA = parseInt(posA.value);
-  if (posB) possessionB = parseInt(posB.value);
+  const shotsA = getVal(statsA, "Shots on Goal");
+  const shotsB = getVal(statsB, "Shots on Goal");
+  const possA = getVal(statsA, "Ball Possession") || 50;
+  const possB = getVal(statsB, "Ball Possession") || 50;
 
   const totalShots = shotsA + shotsB + 1;
-  const totalPoss = possessionA + possessionB;
+  const totalPoss = possA + possB;
 
-  const probNextA = ((shotsA / totalShots) * 0.6 + (possessionA / totalPoss) * 0.4) * 100;
-  const probNextB = ((shotsB / totalShots) * 0.6 + (possessionB / totalPoss) * 0.4) * 100;
-  const probNoGoal = Math.max(0, 100 - (probNextA + probNextB));
-
-  // Sieg-Wahrscheinlichkeit
-  const remaining = 90 - minute;
-  let winA = 0, winB = 0, draw = 0;
-
-  if (scoreA > scoreB) {
-    winA = 60 + remaining * 0.3;
-    winB = 100 - winA - 10;
-    draw = 10;
-  } else if (scoreA < scoreB) {
-    winB = 60 + remaining * 0.3;
-    winA = 100 - winB - 10;
-    draw = 10;
-  } else {
-    draw = 50 - remaining * 0.1;
-    winA = (50 - draw) * (possessionA / 100);
-    winB = (50 - draw) * (possessionB / 100);
-  }
+  const probNextA = ((shotsA / totalShots) * 0.6 + (possA / totalPoss) * 0.4) * 100;
+  const probNextB = ((shotsB / totalShots) * 0.6 + (possB / totalPoss) * 0.4) * 100;
+  const probNone = Math.max(0, 100 - (probNextA + probNextB));
 
   return {
     next: {
       teamA: Math.round(probNextA),
       teamB: Math.round(probNextB),
-      none: Math.round(probNoGoal)
-    },
-    result: {
-      winA: Math.max(0, Math.round(winA)),
-      draw: Math.max(0, Math.round(draw)),
-      winB: Math.max(0, Math.round(winB))
+      none: Math.round(probNone)
     }
   };
 }
 
-// === BALKEN HTML ===
+function calculateValueBet(shotsA, shotsB, minute) {
+  const totalShots = shotsA + shotsB;
+  const expectedGoals = (totalShots * 0.12); // einfache Schätzung: 0,12 Tore pro Schuss
+  const remainingTimeFactor = (90 - minute) / 90;
+  const projectedGoals = expectedGoals + remainingTimeFactor * 1.2;
+  const probOver25 = Math.min(100, (projectedGoals / 2.5) * 100);
+  const quote = 2.00; // Beispielquote Over 2.5
+
+  const value = (probOver25 / 100) * quote;
+  return {
+    probOver25: Math.round(probOver25),
+    isValue: value > 1
+  };
+}
+
+// === UI Funktionen ===
 function createBar(label, value, color) {
   return `
     <div class="bar-label">${label} ${value}%</div>
-    <div class="bar-bg">
-      <div class="bar-fill" style="width:${value}%; background:${color};"></div>
-    </div>
+    <div class="bar-bg"><div class="bar-fill" style="width:${value}%;background:${color};"></div></div>
   `;
 }
 
-// === LIVE SPIELE RENDERN ===
-async function renderLiveMatches() {
-  const matches = await fetchMatches();
-  liveContainer.innerHTML = "";
-
-  if (!matches || matches.length === 0) {
-    liveContainer.innerHTML = "❌ Keine Live-Spiele in den ausgewählten Ligen.";
-    return;
-  }
+async function renderMatches(matches, container, type = "live") {
+  container.innerHTML = "";
 
   for (const match of matches) {
-    const fixtureId = match.fixture.id;
-    const stats = await fetchStats(fixtureId);
-    if (stats.length < 2) continue;
-
-    const statsA = stats[0].statistics;
-    const statsB = stats[1].statistics;
-
     const teamA = match.teams.home.name;
     const teamB = match.teams.away.name;
     const goalsA = match.goals.home;
     const goalsB = match.goals.away;
-    const minute = match.fixture.status.elapsed;
-    const leagueName = match.league.name;
+    const minute = match.fixture.status.elapsed || 0;
 
-    const prob = calculateProbabilities(statsA, statsB, goalsA, goalsB, minute);
+    let extraHTML = "";
 
-    const card = document.createElement("div");
-    card.className = "match-card";
-    card.innerHTML = `
-      <h3>${teamA} vs ${teamB}</h3>
-      <p>🏆 ${leagueName}</p>
-      <p>⏱️ ${minute}' | ⚽ ${goalsA} : ${goalsB}</p>
-      <hr>
-      <strong>Nächstes Tor:</strong>
-      ${createBar(teamA, prob.next.teamA, "#4caf50")}
-      ${createBar(teamB, prob.next.teamB, "#2196f3")}
-      ${createBar("Kein Tor", prob.next.none, "#9e9e9e")}
-      <hr>
-      <strong>Sieg-Wahrscheinlichkeit:</strong>
-      ${createBar(teamA, prob.result.winA, "#4caf50")}
-      ${createBar("Unentschieden", prob.result.draw, "#ff9800")}
-      ${createBar(teamB, prob.result.winB, "#2196f3")}
-    `;
-    liveContainer.appendChild(card);
-  }
-}
+    if (type === "live") {
+      const stats = await fetchStats(match.fixture.id);
+      if (stats.length >= 2) {
+        const statsA = stats[0].statistics;
+        const statsB = stats[1].statistics;
 
-// === KOMMENDE SPIELE RENDERN ===
-async function renderUpcomingMatches() {
-  const matches = await fetchUpcomingMatches();
-  upcomingContainer.innerHTML = "";
+        const shotsA = parseInt(statsA.find(x => x.type === "Shots on Goal")?.value || 0);
+        const shotsB = parseInt(statsB.find(x => x.type === "Shots on Goal")?.value || 0);
 
-  if (!matches || matches.length === 0) {
-    upcomingContainer.innerHTML = "❌ Keine kommenden Spiele in den ausgewählten Ligen (48h).";
-    return;
-  }
+        const prob = calculateProbabilities(statsA, statsB, goalsA, goalsB, minute);
+        const value = calculateValueBet(shotsA, shotsB, minute);
 
-  matches.forEach(match => {
-    const teamA = match.teams.home.name;
-    const teamB = match.teams.away.name;
-    const date = new Date(match.fixture.date);
-    const time = date.toLocaleString();
-    const leagueName = match.league.name;
+        extraHTML = `
+          <strong>📊 Nächstes Tor:</strong>
+          ${createBar(teamA, prob.next.teamA, "#4caf50")}
+          ${createBar(teamB, prob.next.teamB, "#2196f3")}
+          ${createBar("Kein Tor", prob.next.none, "#9e9e9e")}
+          <hr>
+          <strong>💰 Value Bet (Over 2.5):</strong>
+          ${value.isValue ? `<span style="color:green;">✅ Value (${value.probOver25}% / Quote 2.00)</span>` : `<span style="color:red;">⚠️ Kein Value (${value.probOver25}%)</span>`}
+        `;
+      }
+    }
 
     const card = document.createElement("div");
     card.className = "match-card";
     card.innerHTML = `
       <h3>${teamA} vs ${teamB}</h3>
-      <p>🏆 ${leagueName}</p>
-      <p>🕒 ${time}</p>
+      <p>${match.league.name}</p>
+      ${type === "live" ? `<p>⏱️ ${minute}' | ⚽ ${goalsA}:${goalsB}</p>` : `<p>🕒 ${new Date(match.fixture.date).toLocaleString()}</p>`}
+      ${extraHTML}
     `;
-    upcomingContainer.appendChild(card);
-  });
+    container.appendChild(card);
+  }
 }
 
-// === AUTO-UPDATE ===
-async function updateAll() {
-  await renderLiveMatches();
-  await renderUpcomingMatches();
-  lastUpdate.textContent = new Date().toLocaleTimeString();
+async function updateData() {
+  const filter = filterSelect.value;
+  const liveMatches = await fetchMatches(filter);
+  const upcomingMatches = await fetchUpcoming(filter);
+
+  await renderMatches(liveMatches, liveContainer, "live");
+  await renderMatches(upcomingMatches, upcomingContainer, "upcoming");
+
+  lastUpdate.textContent = "Letzte Aktualisierung: " + new Date().toLocaleTimeString();
 }
 
-buildLeagueFilter();
-setInterval(updateAll, 30000);
-updateAll();
+// === Event Listener ===
+filterSelect.addEventListener("change", updateData);
+setInterval(updateData, 60000);
+updateData();
