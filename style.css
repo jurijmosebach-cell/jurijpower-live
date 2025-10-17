@@ -1,49 +1,34 @@
 body {
+  font-family: Arial, sans-serif;
   background-color: #000;
   color: #fff;
-  font-family: Arial, sans-serif;
-  padding: 20px;
+  margin: 0;
+  padding: 0;
 }
 
-h1, h2 {
+header {
   text-align: center;
+  padding: 10px;
+  background: #111;
+  font-size: 20px;
 }
 
-button {
-  background-color: #222;
-  color: #fff;
-  padding: 8px 16px;
-  margin: 10px 0;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
+h2 {
+  margin-top: 20px;
 }
 
-select {
-  padding: 5px;
-  margin-bottom: 15px;
-  background-color: #222;
-  color: #fff;
-  border: 1px solid #555;
+section {
+  padding: 10px;
 }
 
 .match {
   background-color: #111;
-  margin-bottom: 10px;
   padding: 10px;
+  margin: 10px 0;
   border-radius: 8px;
-  transition: background-color 0.3s ease;
+  box-shadow: 0 0 5px #222;
 }
 
-@keyframes blink {
-  0% { background-color: #111; }
-  50% { background-color: #ff4500; }
-  100% { background-color: #111; }
-}
-
-.match span {
-  font-size: 14px;
-}
 .bet-container {
   background-color: #222;
   padding: 8px;
@@ -64,4 +49,10 @@ select {
 .bet-result {
   color: #0f0;
   font-weight: bold;
+}
+
+@keyframes blink {
+  0% { background-color: #111; }
+  50% { background-color: #ff0000; }
+  100% { background-color: #111; }
 }
