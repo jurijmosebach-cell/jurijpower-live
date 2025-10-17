@@ -3,51 +3,38 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>⚽ JurijPower Pro — Live</title>
-
-  <!-- CSS -->
+  <title>⚽ JurijPower Live Tool PRO</title>
   <link rel="stylesheet" href="style.css" />
-  <meta name="theme-color" content="#000000" />
 </head>
 <body>
   <header>
-    <h1>⚽ JurijPower Pro — Live</h1>
-    <p>Live-Wetten Trends (Fußball)</p>
+    <h1>⚽ JurijPower Live Tool – PRO</h1>
+    <div class="controls">
+      <select id="filterSelect">
+        <option value="all">🌍 Alle Ligen</option>
+        <option value="favorites">⭐ Favoriten</option>
+      </select>
+      <button id="refreshButton">🔄 Aktualisieren</button>
+    </div>
+    <p>🕒 Letztes Update: <span id="lastUpdate">–</span></p>
   </header>
 
-  <div class="filter-container">
-    <label for="filterSelect">📊 Filter:</label>
-    <select id="filterSelect">
-      <option value="all">Alle Spiele</option>
-      <option value="favorites">Favoriten-Ligen</option>
-    </select>
-  </div>
-
   <main>
-    <!-- LIVE SPIELE -->
     <section>
       <h2>📡 Live Spiele</h2>
-      <button id="refreshButton">🔄 Aktualisieren</button>
       <div id="live-matches" class="match-container"></div>
     </section>
 
-    <!-- KOMMENDE SPIELE -->
     <section>
-      <h2>⏳ Kommende Spiele (24h)</h2>
+      <h2>🗓️ Kommende Spiele (24h)</h2>
       <div id="upcoming-matches" class="match-container"></div>
-    </section>
-
-    <!-- LETZTES UPDATE -->
-    <section>
-      <p>⏰ Letztes Update: <span id="lastUpdate"></span></p>
     </section>
   </main>
 
   <footer>
-    <p>⚡ JurijPower Pro — Live Score & Value Tool</p>
+    <p>Made with ❤️ by JurijPower | Live-Daten von API-Football</p>
   </footer>
 
-  <!-- JS -->
   <script src="app.js"></script>
 </body>
 </html>
