@@ -1,9 +1,12 @@
 // === ⚽ JurijPower Live Tool – PRO Version ===
-// Live-Spiele + Kommende Spiele (48h) + Tor- & Sieg-Wahrscheinlichkeit
+// Mit Favoritenligen, Live-Spielen, kommenden Spielen (48h) & Wahrscheinlichkeiten
 
 // === API KEY ===
 const API_KEY = "c6ad1210c71b17cca24284ab8a9873b4";
 const BASE_URL = "https://v3.football.api-sports.io";
+
+// === FAVORITEN-LIGEN (IDs) ===
+const FAVORITE_LEAGUES = [78, 79, 39, 135, 140, 61, 41];
 
 // === HTML Elemente ===
 const liveContainer = document.getElementById("live-matches");
@@ -16,7 +19,7 @@ async function fetchMatches() {
   const url = `${BASE_URL}/fixtures?live=all`;
   const res = await fetch(url, { headers });
   const data = await res.json();
-  return data.response;
+  return data.response.filter(m => FAVORITE_LEAGUES.includes(m.league.id));
 }
 
 // === KOMMENDE SPIELE HOLEN (48h) ===
@@ -25,7 +28,7 @@ async function fetchUpcomingMatches() {
 
   const today = new Date();
   const to48h = new Date();
-  to48h.setDate(today.getDate() + 2); // ⬅️ 48 Stunden
+  to48h.setDate(today.getDate() + 2);
 
   const fromDate = today.toISOString().split("T")[0];
   const toDate = to48h.toISOString().split("T")[0];
@@ -33,7 +36,8 @@ async function fetchUpcomingMatches() {
   const url = `${BASE_URL}/fixtures?from=${fromDate}&to=${toDate}`;
   const res = await fetch(url, { headers });
   const data = await res.json();
-  return data.response;
+
+  return data.response.filter(m => FAVORITE_LEAGUES.includes(m.league.id));
 }
 
 // === STATISTIKEN HOLEN ===
@@ -115,7 +119,7 @@ async function renderLiveMatches() {
   liveContainer.innerHTML = "";
 
   if (!matches || matches.length === 0) {
-    liveContainer.innerHTML = "❌ Keine Live-Spiele aktuell.";
+    liveContainer.innerHTML = "❌ Keine Live-Spiele in den Favoritenligen.";
     return;
   }
 
@@ -132,6 +136,7 @@ async function renderLiveMatches() {
     const goalsA = match.goals.home;
     const goalsB = match.goals.away;
     const minute = match.fixture.status.elapsed;
+    const leagueName = match.league.name;
 
     const prob = calculateProbabilities(statsA, statsB, goalsA, goalsB, minute);
 
@@ -139,6 +144,7 @@ async function renderLiveMatches() {
     card.className = "match-card";
     card.innerHTML = `
       <h3>${teamA} vs ${teamB}</h3>
+      <p>🏆 ${leagueName}</p>
       <p>⏱️ ${minute}' | ⚽ ${goalsA} : ${goalsB}</p>
       <hr>
       <strong>Nächstes Tor:</strong>
@@ -161,7 +167,7 @@ async function renderUpcomingMatches() {
   upcomingContainer.innerHTML = "";
 
   if (!matches || matches.length === 0) {
-    upcomingContainer.innerHTML = "❌ Keine kommenden Spiele in den nächsten 48h.";
+    upcomingContainer.innerHTML = "❌ Keine kommenden Spiele in deinen Favoritenligen (48h).";
     return;
   }
 
@@ -170,11 +176,13 @@ async function renderUpcomingMatches() {
     const teamB = match.teams.away.name;
     const date = new Date(match.fixture.date);
     const time = date.toLocaleString();
+    const leagueName = match.league.name;
 
     const card = document.createElement("div");
     card.className = "match-card";
     card.innerHTML = `
       <h3>${teamA} vs ${teamB}</h3>
+      <p>🏆 ${leagueName}</p>
       <p>🕒 ${time}</p>
     `;
     upcomingContainer.appendChild(card);
