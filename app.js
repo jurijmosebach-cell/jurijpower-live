@@ -1,10 +1,7 @@
 // === ⚽ JurijPower Live Tool - PRO Version + Alarm ===
 const API_KEY = "c6ad1210c71b17cca24284ab8a9873b4";
 const BASE_URL = "https://v3.football.api-sports.io";
-
-// === Favoritenligen (IDs laut API-Football) ===
 const FAVORITE_LEAGUES = [78, 79, 39, 135, 140, 61];
-// Bundesliga 1, 2, Premier League, Serie A, Primera Division, Ligue 1
 
 // === HTML Elemente ===
 const liveContainer = document.getElementById("live-matches");
@@ -13,10 +10,13 @@ const lastUpdate = document.getElementById("lastUpdate");
 const refreshButton = document.getElementById("refreshButton");
 const filterSelect = document.getElementById("filterSelect");
 
-// === Browser Notifications aktivieren ===
+// === Notification Setup ===
 if ("Notification" in window && Notification.permission !== "granted") {
   Notification.requestPermission();
 }
+
+// 🧠 Speicherung, um Mehrfach-Notifications zu vermeiden
+const notifiedMatches = new Set();
 
 // === Daten abrufen ===
 async function fetchMatches(filter = "all") {
@@ -64,12 +64,24 @@ function calcValueBet(prob) {
   return prob >= 60 ? "💰 Value Bet" : "";
 }
 
-function sendNotification(teamA, teamB, prob) {
+// 🟡 Blinkeffekt verwalten
+function toggleBlinkEffect(element, shouldBlink) {
+  if (shouldBlink) {
+    element.classList.add("blink");
+  } else {
+    element.classList.remove("blink");
+  }
+}
+
+function sendNotification(matchId, teamA, teamB, prob) {
   if ("Notification" in window && Notification.permission === "granted") {
-    new Notification("🔥 Hohe Torwahrscheinlichkeit!", {
-      body: `${teamA} vs ${teamB}\nTorwahrscheinlichkeit: ${prob}%`,
-      icon: "https://cdn-icons-png.flaticon.com/512/51/51767.png"
-    });
+    if (!notifiedMatches.has(matchId)) {
+      new Notification("🔥 Hohe Torwahrscheinlichkeit!", {
+        body: `${teamA} vs ${teamB}\nTorwahrscheinlichkeit: ${prob}%`,
+        icon: "https://cdn-icons-png.flaticon.com/512/51/51767.png"
+      });
+      notifiedMatches.add(matchId);
+    }
   }
 }
 
@@ -86,10 +98,11 @@ function displayMatches(container, matches, isLive = false) {
     const prob = calcGoalProbability(match);
     const value = calcValueBet(prob);
     const isHigh = prob >= 70;
+    const matchId = match.fixture.id;
 
     const div = document.createElement("div");
     div.classList.add("match-card");
-    if (isHigh && isLive) div.classList.add("blink");
+    toggleBlinkEffect(div, isHigh && isLive);
 
     div.innerHTML = `
       <div class="match-teams icon-ball">${match.teams.home.name} vs ${match.teams.away.name}</div>
@@ -105,7 +118,7 @@ function displayMatches(container, matches, isLive = false) {
 
     // 🔔 Notification nur bei Live-Spielen + hoher Wahrscheinlichkeit
     if (isHigh && isLive) {
-      sendNotification(match.teams.home.name, match.teams.away.name, prob);
+      sendNotification(matchId, match.teams.home.name, match.teams.away.name, prob);
     }
   });
 }
@@ -119,8 +132,7 @@ async function updateData() {
   displayMatches(liveContainer, liveMatches, true);
   displayMatches(upcomingContainer, upcomingMatches, false);
 
-  const now = new Date();
-  lastUpdate.textContent = now.toLocaleTimeString();
+  lastUpdate.textContent = new Date().toLocaleTimeString();
 }
 
 // === Events ===
