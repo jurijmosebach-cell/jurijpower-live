@@ -1,31 +1,24 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>JurijPower Pro — Live ⚽</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JurijPower Live ⚽</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header>
-    <h1>JurijPower Pro — Live ⚡</h1>
-    <p>Live-Wetten Trends (Fußball)</p>
-    <div class="controls">
-      <button id="refreshBtn">🔄 Aktualisieren</button>
-      <label for="leagueFilter">Filter Liga:</label>
-      <select id="leagueFilter">
-        <option value="all">Alle Ligen</option>
-      </select>
-    </div>
-  </header>
+  <h1>⚽ JurijPower Live</h1>
 
-  <main>
-    <div id="matchList" class="match-list"></div>
-  </main>
+  <!-- LIVE SPIELE -->
+  <h2>🟢 Live-Spiele</h2>
+  <button id="refreshBtn">🔄 Aktualisieren</button>
+  <select id="leagueFilter"></select>
+  <div id="matchList"></div>
 
-  <footer>
-    <p>🔥 Live-Daten powered by API-Football</p>
-  </footer>
+  <!-- Kommende Spiele -->
+  <h2 style="margin-top: 20px;">🕒 Kommende Spiele (nächste 24 Stunden)</h2>
+  <select id="upcomingLeagueFilter"></select>
+  <div id="upcomingMatchList"></div>
 
   <script src="app.js"></script>
 </body>
