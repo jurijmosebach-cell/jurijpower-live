@@ -3,13 +3,29 @@ const matchList = document.getElementById("matchList");
 const refreshBtn = document.getElementById("refreshBtn");
 const leagueFilter = document.getElementById("leagueFilter");
 
+// 🧪 Debug-Anzeige unten
+const debugDiv = document.createElement("div");
+debugDiv.style.padding = "10px";
+debugDiv.style.fontSize = "12px";
+debugDiv.style.color = "#0f0";
+debugDiv.style.backgroundColor = "#111";
+debugDiv.innerText = "🧪 Debug aktiv – warte auf Antwort…";
+document.body.appendChild(debugDiv);
+
 async function fetchMatches() {
   matchList.innerHTML = "⏳ Lade Live-Daten...";
+  debugDiv.innerText = "⏳ Anfrage an API gesendet...";
+
   try {
     const res = await fetch("https://v3.football.api-sports.io/fixtures?live=all", {
       headers: { "x-apisports-key": apiKey }
     });
     const data = await res.json();
+
+    // 🧪 Debug Ausgabe
+    console.log("Live Daten:", data);
+    debugDiv.innerText = `✅ Antwort empfangen: ${data.response?.length || 0} Spiele`;
+
     const matches = data.response;
 
     if (!matches || matches.length === 0) {
@@ -17,7 +33,7 @@ async function fetchMatches() {
       return;
     }
 
-    // Liste der Ligen füllen
+    // Ligen in Dropdown
     const leagues = [...new Set(matches.map(m => m.league.name))];
     leagueFilter.innerHTML = `<option value="all">Alle Ligen</option>`;
     leagues.forEach(league => {
@@ -30,6 +46,7 @@ async function fetchMatches() {
     renderMatches(matches);
   } catch (error) {
     matchList.innerHTML = "❌ Fehler beim Laden der Daten.";
+    debugDiv.innerText = "❌ API-Fehler — siehe Konsole!";
     console.error(error);
   }
 }
@@ -62,8 +79,5 @@ function renderMatches(matches) {
 refreshBtn.addEventListener("click", fetchMatches);
 leagueFilter.addEventListener("change", fetchMatches);
 
-// automatische Aktualisierung alle 30 Sek.
 setInterval(fetchMatches, 30000);
-
-// Start beim Laden
 fetchMatches();
