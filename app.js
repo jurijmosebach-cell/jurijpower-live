@@ -1,31 +1,21 @@
-// === ⚽ JurijPower Live Tool – PRO Version mit Balkenanzeige ===
-// API KEY + BASE URL
-const API_KEY = "c6ad1210c71b17cca24284ab8a9873b4";  // <- Dein Schlüssel
+// === ⚽ JurijPower Live Tool PRO ===
+// Mit Live-Spielen, kommenden Spielen, Tor- & Sieg-Wahrscheinlichkeit
+
+// === API KEY ===
+const API_KEY = "c6ad1210c71b17cca24284ab8a9873b4";
 const BASE_URL = "https://v3.football.api-sports.io";
 
-// HTML Container
+// === HTML Elemente ===
 const liveContainer = document.getElementById("live-matches");
+const upcomingContainer = document.getElementById("upcoming-matches");
 const lastUpdate = document.getElementById("lastUpdate");
-
-// === TEST-FIXTURE (wenn keine Live-Spiele laufen) ===
-const TEST_FIXTURE_ID = 1035059; // Beispiel-ID eines echten Spiels
-let useTestFixture = true;       // <- auf true lassen zum Testen
 
 // === LIVE SPIELE HOLEN ===
 async function fetchMatches() {
   const headers = { "x-apisports-key": API_KEY };
-  let url = `${BASE_URL}/fixtures?live=all`;
+  const url = `${BASE_URL}/fixtures?live=all`;
   const res = await fetch(url, { headers });
   const data = await res.json();
-
-  // Wenn keine Live-Spiele gefunden → Test-FIXTURE laden
-  if (data.response.length === 0 && useTestFixture) {
-    const testUrl = `${BASE_URL}/fixtures?id=${TEST_FIXTURE_ID}`;
-    const testRes = await fetch(testUrl, { headers });
-    const testData = await testRes.json();
-    return testData.response;
-  }
-
   return data.response;
 }
 
@@ -33,6 +23,20 @@ async function fetchMatches() {
 async function fetchStats(fixtureId) {
   const headers = { "x-apisports-key": API_KEY };
   const url = `${BASE_URL}/fixtures/statistics?fixture=${fixtureId}`;
+  const res = await fetch(url, { headers });
+  const data = await res.json();
+  return data.response;
+}
+
+// === KOMMENDE SPIELE HOLEN (24h) ===
+async function fetchUpcoming() {
+  const headers = { "x-apisports-key": API_KEY };
+  const now = new Date();
+  const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+  const todayStr = now.toISOString().split("T")[0];
+  const tomorrowStr = tomorrow.toISOString().split("T")[0];
+
+  const url = `${BASE_URL}/fixtures?from=${todayStr}&to=${tomorrowStr}`;
   const res = await fetch(url, { headers });
   const data = await res.json();
   return data.response;
@@ -92,7 +96,7 @@ function calculateProbabilities(statsA, statsB, scoreA, scoreB, minute) {
   };
 }
 
-// === HILFSFUNKTION: BALKEN HTML ===
+// === BALKEN FÜR ANZEIGE ===
 function createBar(label, value, color) {
   return `
     <div class="bar-label">${label} ${value}%</div>
@@ -102,18 +106,22 @@ function createBar(label, value, color) {
   `;
 }
 
-// === SPIELE ANZEIGEN ===
+// === LIVE SPIELE ANZEIGEN ===
 async function renderLiveMatches() {
   liveContainer.innerHTML = "⏳ Lade Live-Spiele...";
-
   const matches = await fetchMatches();
   liveContainer.innerHTML = "";
+
+  if (!matches || matches.length === 0) {
+    liveContainer.innerHTML = "❌ Keine Live-Spiele aktuell.";
+    return;
+  }
 
   for (const match of matches) {
     const fixtureId = match.fixture.id;
     const stats = await fetchStats(fixtureId);
-    if (!stats || stats.length < 2) continue;
 
+    if (stats.length < 2) continue;
     const statsA = stats[0].statistics;
     const statsB = stats[1].statistics;
 
@@ -121,7 +129,7 @@ async function renderLiveMatches() {
     const teamB = match.teams.away.name;
     const goalsA = match.goals.home;
     const goalsB = match.goals.away;
-    const minute = match.fixture.status.elapsed || 0;
+    const minute = match.fixture.status.elapsed;
 
     const prob = calculateProbabilities(statsA, statsB, goalsA, goalsB, minute);
 
@@ -143,11 +151,42 @@ async function renderLiveMatches() {
     `;
     liveContainer.appendChild(card);
   }
-
-  const now = new Date();
-  lastUpdate.textContent = "Letzte Aktualisierung: " + now.toLocaleTimeString();
 }
 
-// === AUTO-UPDATE ALLE 30 SEKUNDEN ===
-setInterval(renderLiveMatches, 30000);
-renderLiveMatches();
+// === KOMMENDE SPIELE ANZEIGEN ===
+async function renderUpcoming() {
+  upcomingContainer.innerHTML = "⏳ Lade kommende Spiele...";
+  const matches = await fetchUpcoming();
+  upcomingContainer.innerHTML = "";
+
+  if (!matches || matches.length === 0) {
+    upcomingContainer.innerHTML = "❌ Keine kommenden Spiele in den nächsten 24h.";
+    return;
+  }
+
+  matches.forEach(match => {
+    const teamA = match.teams.home.name;
+    const teamB = match.teams.away.name;
+    const time = new Date(match.fixture.date).toLocaleString();
+
+    const card = document.createElement("div");
+    card.className = "match-card upcoming";
+    card.innerHTML = `
+      <h3>${teamA} vs ${teamB}</h3>
+      <p>🕒 ${time}</p>
+      <p>🏆 ${match.league.name}</p>
+    `;
+    upcomingContainer.appendChild(card);
+  });
+}
+
+// === AUTO UPDATE ===
+async function updateAll() {
+  await renderLiveMatches();
+  await renderUpcoming();
+  lastUpdate.textContent = "Letzte Aktualisierung: " + new Date().toLocaleTimeString();
+}
+
+// Start
+updateAll();
+setInterval(updateAll, 30000);
