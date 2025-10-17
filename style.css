@@ -1,75 +1,74 @@
-/* Allgemeines Layout */
 body {
+  background-color: #000;
+  color: #fff;
+  font-family: Arial, sans-serif;
   margin: 0;
   padding: 0;
-  font-family: Arial, sans-serif;
-  background: #0e1621;
-  color: #ffffff;
 }
 
 header {
-  background: #1f2b38;
-  padding: 1rem;
   text-align: center;
+  padding: 20px;
+  background-color: #111;
 }
 
-header h1 {
+h1 {
   margin: 0;
-  font-size: 1.5rem;
+  font-size: 24px;
 }
 
-.subtitle {
-  margin-top: 0.5rem;
-  font-size: 0.9rem;
-  color: #bbb;
+.controls {
+  margin-top: 10px;
 }
 
-/* App-Bereich */
-#appSection {
-  padding: 1rem;
-}
-
-#controls {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-  flex-wrap: wrap;
-}
-
-#refreshBtn {
-  background: #ff6a00;
+button {
+  background-color: #222;
+  color: #fff;
   border: none;
-  padding: 0.5rem 1rem;
-  font-size: 1rem;
+  padding: 8px 12px;
   cursor: pointer;
-  color: white;
+  border-radius: 5px;
+  margin-right: 10px;
+}
+
+button:hover {
+  background-color: #444;
+}
+
+select {
+  background-color: #222;
+  color: #fff;
+  border: none;
+  padding: 5px;
   border-radius: 5px;
 }
 
-#refreshBtn:hover {
-  background: #e95c00;
+.match-list {
+  padding: 20px;
 }
 
-#leagueFilter {
-  background: #1f2b38;
-  color: white;
-  padding: 0.5rem;
-  border: 1px solid #333;
-  border-radius: 5px;
-}
-
-#liveContainer {
-  background: #1f2b38;
-  padding: 1rem;
+.match {
+  background-color: #111;
+  margin-bottom: 10px;
+  padding: 15px;
   border-radius: 10px;
-  min-height: 200px;
+  border-left: 4px solid #ff4500;
 }
 
-/* Status Anzeige */
-#status {
-  margin-top: 1rem;
-  font-size: 0.8rem;
-  color: #aaa;
+.match h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.match p {
+  margin: 5px 0 0;
+  color: #ccc;
+  font-size: 14px;
+}
+
+footer {
   text-align: center;
+  padding: 10px;
+  font-size: 12px;
+  color: #888;
 }
