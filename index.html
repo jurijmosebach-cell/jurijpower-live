@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>JurijPower Pro</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <h1>JurijPower Pro — Live</h1>
+    <button id="logout" title="Logout" style="float:right">🔒</button>
+    <p class="subtitle">Live-Wetten Trends (Fußball) — Passwortgeschützt</p>
+  </header>
+
+  <main>
+    <section id="loginSection">
+      <h2>Login</h2>
+      <p>Bitte gib dein Passwort ein, um auf JurijPower Pro zuzugreifen.</p>
+      <input id="pw" type="password" placeholder="Passwort" />
+      <button id="loginBtn">Login</button>
+      <div id="loginMsg" style="color:#f88;margin-top:8px"></div>
+    </section>
+
+    <section id="appSection" class="hidden">
+      <div id="controls">
+        <button id="refreshBtn">Aktualisieren</button>
+        <label>Filter Liga: 
+          <select id="leagueFilter">
+            <option value="all">Alle Ligen</option>
+          </select>
+        </label>
+      </div>
+      <div id="liveContainer">
+        <div id="matchList"></div>
+      </div>
+      <div id="status" class="small"></div>
+    </section>
+  </main>
+
+<script src="app.js"></script>
+</body>
+</html>

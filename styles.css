@@ -1,0 +1,21 @@
+:root{--bg:#071027;--card:#081228;--accent:#06b6d4;--text:#e6eef6;--good:#10b981;--bad:#ef4444;--neutral:#9ca3af}
+*{box-sizing:border-box}
+body{font-family:Inter,Arial,sans-serif;background:linear-gradient(180deg,#071027 0%, #081428 100%);color:var(--text);margin:0;padding:14px}
+header{position:relative;padding-bottom:10px}
+h1{margin:0;font-size:20px}
+.subtitle{margin:0;color:#9fb7c2;font-size:13px}
+#loginSection, #appSection{background:rgba(255,255,255,0.02);padding:12px;border-radius:8px;margin-top:12px}
+#matchList .card{background:rgba(255,255,255,0.03);padding:10px;margin-bottom:8px;border-radius:6px;display:flex;align-items:center;justify-content:space-between}
+.small{color:#9fb7c2;font-size:13px;margin-top:8px}
+.hidden{display:none}
+button,input,select{padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:var(--text)}
+#logout{position:absolute;right:0;top:0}
+.bars{margin-top:8px}
+.barWrap{background:rgba(255,255,255,0.04);height:12px;border-radius:8px;overflow:hidden;margin:6px 0}
+.bar{height:12px;width:0%;transition:width 500ms ease;border-radius:6px}
+.bar.home{background:var(--good)}
+.bar.away{background:var(--bad)}
+.signal{margin-top:6px;padding:6px;border-radius:6px;display:inline-block;font-weight:600}
+.signal.good{background:rgba(16,185,129,0.12);color:var(--good)}
+.signal.bad{background:rgba(239,68,68,0.12);color:var(--bad)}
+.signal.neutral{background:rgba(156,163,175,0.08);color:var(--neutral)}
