@@ -1,17 +1,50 @@
 // === ⚽ JurijPower Live Tool – PRO Version ===
-// Mit Favoritenligen, Live-Spielen, kommenden Spielen (48h) & Wahrscheinlichkeiten
+// Mit Ligenfilter, Live-Spielen, kommenden Spielen (48h) & Wahrscheinlichkeiten
 
 // === API KEY ===
 const API_KEY = "c6ad1210c71b17cca24284ab8a9873b4";
 const BASE_URL = "https://v3.football.api-sports.io";
 
-// === FAVORITEN-LIGEN (IDs) ===
-const FAVORITE_LEAGUES = [78, 79, 39, 135, 140, 61, 41];
+// === FAVORITEN-LIGEN (IDs + Name) ===
+const FAVORITE_LEAGUES = [
+  { id: 78, name: "Bundesliga 1 🇩🇪" },
+  { id: 79, name: "Bundesliga 2 🇩🇪" },
+  { id: 39, name: "Premier League 🏴" },
+  { id: 135, name: "Serie A 🇮🇹" },
+  { id: 140, name: "La Liga 🇪🇸" },
+  { id: 61, name: "Ligue 1 🇫🇷" },
+  { id: 41, name: "Superligaen 🇩🇰" }
+];
+
+let activeLeagues = FAVORITE_LEAGUES.map(l => l.id);
 
 // === HTML Elemente ===
+const leagueFilter = document.getElementById("league-filter");
 const liveContainer = document.getElementById("live-matches");
 const upcomingContainer = document.getElementById("upcoming-matches");
 const lastUpdate = document.getElementById("lastUpdate");
+
+// === LIGENFILTER AUFBAUEN ===
+function buildLeagueFilter() {
+  FAVORITE_LEAGUES.forEach(league => {
+    const wrapper = document.createElement("label");
+    wrapper.className = "league-checkbox";
+    wrapper.innerHTML = `
+      <input type="checkbox" value="${league.id}" checked>
+      <span>${league.name}</span>
+    `;
+    wrapper.querySelector("input").addEventListener("change", (e) => {
+      const id = parseInt(e.target.value);
+      if (e.target.checked) {
+        activeLeagues.push(id);
+      } else {
+        activeLeagues = activeLeagues.filter(l => l !== id);
+      }
+      updateAll();
+    });
+    leagueFilter.appendChild(wrapper);
+  });
+}
 
 // === LIVE SPIELE HOLEN ===
 async function fetchMatches() {
@@ -19,7 +52,7 @@ async function fetchMatches() {
   const url = `${BASE_URL}/fixtures?live=all`;
   const res = await fetch(url, { headers });
   const data = await res.json();
-  return data.response.filter(m => FAVORITE_LEAGUES.includes(m.league.id));
+  return data.response.filter(m => activeLeagues.includes(m.league.id));
 }
 
 // === KOMMENDE SPIELE HOLEN (48h) ===
@@ -37,7 +70,7 @@ async function fetchUpcomingMatches() {
   const res = await fetch(url, { headers });
   const data = await res.json();
 
-  return data.response.filter(m => FAVORITE_LEAGUES.includes(m.league.id));
+  return data.response.filter(m => activeLeagues.includes(m.league.id));
 }
 
 // === STATISTIKEN HOLEN ===
@@ -119,7 +152,7 @@ async function renderLiveMatches() {
   liveContainer.innerHTML = "";
 
   if (!matches || matches.length === 0) {
-    liveContainer.innerHTML = "❌ Keine Live-Spiele in den Favoritenligen.";
+    liveContainer.innerHTML = "❌ Keine Live-Spiele in den ausgewählten Ligen.";
     return;
   }
 
@@ -167,7 +200,7 @@ async function renderUpcomingMatches() {
   upcomingContainer.innerHTML = "";
 
   if (!matches || matches.length === 0) {
-    upcomingContainer.innerHTML = "❌ Keine kommenden Spiele in deinen Favoritenligen (48h).";
+    upcomingContainer.innerHTML = "❌ Keine kommenden Spiele in den ausgewählten Ligen (48h).";
     return;
   }
 
@@ -196,5 +229,6 @@ async function updateAll() {
   lastUpdate.textContent = new Date().toLocaleTimeString();
 }
 
+buildLeagueFilter();
 setInterval(updateAll, 30000);
 updateAll();
