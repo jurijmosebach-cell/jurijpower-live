@@ -1,6 +1,6 @@
-/* === JurijPower Pro - Style.css === */
+/* === JurijPower Pro - Style.css (mit Icons) === */
 
-/* Grunddesign */
+/* Farbvariablen (Dark Mode) */
 :root {
   --bg: #111;
   --card-bg: #1c1c1c;
@@ -43,10 +43,13 @@ header p {
   margin: 0.3rem 0 0;
 }
 
-/* Filter */
-section label {
-  font-size: 0.95rem;
-  margin-right: 0.5rem;
+/* Filter-Menü */
+.filter-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 1rem 0;
 }
 
 #filterSelect {
@@ -56,6 +59,7 @@ section label {
   border: 1px solid var(--border);
   border-radius: 5px;
   outline: none;
+  cursor: pointer;
 }
 
 #filterSelect:hover {
@@ -73,6 +77,9 @@ button {
   border-radius: 5px;
   cursor: pointer;
   transition: 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
 }
 
 button:hover {
@@ -91,7 +98,7 @@ section {
   margin-bottom: 2rem;
 }
 
-/* Match-Container */
+/* Match Container */
 .match-container {
   background: var(--card-bg);
   border: 1px solid var(--border);
@@ -112,16 +119,44 @@ section {
   border-bottom: none;
 }
 
+/* Teams & Infos */
 .match-teams {
   font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .match-info {
   font-size: 0.9rem;
   color: #aaa;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
 }
 
-/* Value Bets + Wahrscheinlichkeit */
+/* Icons in Spielen */
+.icon-ball::before {
+  content: "⚽";
+}
+
+.icon-chart::before {
+  content: "📊";
+}
+
+.icon-clock::before {
+  content: "⏰";
+}
+
+.icon-fire::before {
+  content: "🔥";
+}
+
+.icon-money::before {
+  content: "💰";
+}
+
+/* Value Bets & Wahrscheinlichkeit */
 .value-bet {
   color: var(--accent);
   font-weight: bold;
