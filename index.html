@@ -1,47 +1,40 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>⚽ JurijPower Live Tool PRO</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>⚽ JurijPower Live Tool – PRO</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header>
-    <h1>⚽ JurijPower Live Tool – PRO</h1>
-    <div class="controls">
-      <select id="filterSelect">
-        <option value="all">🌍 Alle Ligen</option>
-        <option value="favorites">⭐ Favoriten</option>
-      </select>
-      <button id="refreshButton">🔄 Aktualisieren</button>
-    </div>
-    <p>🕒 Letztes Update: <span id="lastUpdate">–</span></p>
-  </header>
+  <h1>⚽ JurijPower Live Tool – PRO</h1>
 
-  <main>
-    <section>
-      <h2>📡 Live Spiele</h2>
-      <div id="live-matches" class="match-container"></div>
-    </section>
+  <div class="controls">
+    <select id="filterSelect">
+      <option value="all">🌍 Alle Ligen</option>
+      <option value="favorites">⭐ Favoritenligen</option>
+    </select>
+    <button id="refreshButton">🔄 Aktualisieren</button>
+  </div>
 
-    <section>
-      <h2>🗓️ Kommende Spiele (24 h)</h2>
-      <div id="upcoming-matches" class="match-container"></div>
-    </section>
+  <p>⏰ Letztes Update: <span id="lastUpdate"></span></p>
 
-    <section>
-      <h2>💎 Automatische Kombi mit höchstem Value</h2>
-      <div id="combo-container" class="combo-box">
-        <p>⚡ Kombi wird automatisch berechnet …</p>
-      </div>
-      <button id="copyComboButton" class="copy-btn">📋 Kombi kopieren</button>
-      <p id="copyMessage" class="copy-message"></p>
-    </section>
-  </main>
+  <h2>📡 Live Spiele</h2>
+  <div id="live-matches"></div>
+
+  <h2>📅 Kommende Spiele (24 h)</h2>
+  <div id="upcoming-matches"></div>
+
+  <h2>💎 Automatische Kombi mit höchstem Value</h2>
+  <div id="combo-box">
+    <p>Gesamtquote: <span id="combo-odds">1.00</span></p>
+    <p>Kombi-Value: <span id="combo-value">1.00</span></p>
+    <button id="copyComboBtn">📋 Kombi kopieren</button>
+    <ul id="combo-list"></ul>
+  </div>
 
   <footer>
-    <p>Made with ❤️ by JurijPower | Live-Daten von API-Football</p>
+    <p>Made with ❤️ by JurijPower | Live-Daten: API-Football</p>
   </footer>
 
   <script src="app.js"></script>
