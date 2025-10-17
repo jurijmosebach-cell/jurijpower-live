@@ -1,58 +1,47 @@
 body {
-  font-family: Arial, sans-serif;
-  background-color: #000;
-  color: #fff;
-  margin: 0;
-  padding: 0;
-}
-
-header {
-  text-align: center;
-  padding: 10px;
   background: #111;
-  font-size: 20px;
-}
-
-h2 {
-  margin-top: 20px;
-}
-
-section {
-  padding: 10px;
-}
-
-.match {
-  background-color: #111;
-  padding: 10px;
-  margin: 10px 0;
-  border-radius: 8px;
-  box-shadow: 0 0 5px #222;
-}
-
-.bet-container {
-  background-color: #222;
-  padding: 8px;
-  margin-top: 8px;
-  border-radius: 5px;
-}
-
-.bet-container input {
-  width: 80px;
-  padding: 4px;
-  margin-right: 5px;
-  background-color: #111;
   color: #fff;
-  border: 1px solid #555;
-  border-radius: 3px;
+  font-family: Arial, sans-serif;
+  padding: 10px;
 }
 
-.bet-result {
-  color: #0f0;
-  font-weight: bold;
+header h1 {
+  text-align: center;
 }
 
-@keyframes blink {
-  0% { background-color: #111; }
-  50% { background-color: #ff0000; }
-  100% { background-color: #111; }
+#live-matches, #upcoming-matches {
+  margin-top: 15px;
+}
+
+.match-card {
+  background: #222;
+  padding: 10px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+
+.match-card h3 {
+  margin: 0 0 5px;
+}
+
+input, select, button {
+  margin: 5px;
+  padding: 5px;
+}
+
+button {
+  background: #444;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #666;
+}
+
+footer {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 0.8em;
 }
