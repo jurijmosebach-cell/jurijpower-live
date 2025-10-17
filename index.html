@@ -3,38 +3,41 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>JurijPower Live ⚽</title>
+  <title>JurijPower Pro — Live</title>
   <link rel="stylesheet" href="style.css" />
+  <link rel="manifest" href="manifest.json" />
 </head>
 <body>
   <header>
-    <h1>⚽ JurijPower Live Tool</h1>
+    <h1>⚽ JurijPower Pro — Live</h1>
+    <p>Live-Wetten Trends (Fußball)</p>
   </header>
 
-  <section>
-    <h2>🟢 Live Spiele</h2>
-    <label>🏆 Liga:</label>
-    <select id="leagueFilter">
-      <option value="all">Alle Ligen</option>
-    </select>
-    <div id="matchList"></div>
+  <section id="live-section">
+    <div>
+      <label for="leagueFilter">🏆 Liga:</label>
+      <select id="leagueFilter">
+        <option value="">Alle Ligen</option>
+      </select>
+      <button id="refreshButton">🔄 Aktualisieren</button>
+    </div>
+    <div id="live-matches"></div>
   </section>
 
-  <section>
+  <section id="upcoming-section">
     <h2>⏳ Kommende Spiele (24h)</h2>
-    <label>🏆 Liga:</label>
+    <label for="upcomingLeagueFilter">🏆 Liga:</label>
     <select id="upcomingLeagueFilter">
-      <option value="all">Alle Ligen</option>
+      <option value="">Alle Ligen</option>
     </select>
-    <div id="upcomingMatchList"></div>
+    <div id="upcoming-matches"></div>
   </section>
 
   <footer>
-    <p>🕒 Letztes Update: <span id="lastUpdate">-</span></p>
-    <p id="debugOutput"></p>
+    <p>🕒 Letztes Update: <span id="lastUpdate">–</span></p>
+    <p>JurijPower Pro — Live Score App</p>
   </footer>
 
-  <audio id="goalSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" preload="auto"></audio>
   <script src="app.js"></script>
 </body>
 </html>
