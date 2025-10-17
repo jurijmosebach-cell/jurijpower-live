@@ -1,47 +1,70 @@
 body {
-  background: #111;
+  background: #000;
   color: #fff;
   font-family: Arial, sans-serif;
-  padding: 10px;
+  margin: 0;
+  padding: 0;
+}
+
+header {
+  text-align: center;
+  padding: 20px;
 }
 
 header h1 {
-  text-align: center;
+  font-size: 28px;
+  margin: 0;
 }
 
-#live-matches, #upcoming-matches {
-  margin-top: 15px;
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 10px;
+}
+
+h2 {
+  margin: 20px 10px 10px;
 }
 
 .match-card {
-  background: #222;
-  padding: 10px;
+  background: #111;
+  border: 1px solid #333;
   border-radius: 10px;
-  margin-bottom: 10px;
+  padding: 10px;
+  margin: 10px;
 }
 
 .match-card h3 {
   margin: 0 0 5px;
 }
 
-input, select, button {
-  margin: 5px;
-  padding: 5px;
+input {
+  background: #222;
+  color: #fff;
+  border: 1px solid #555;
+  border-radius: 5px;
+  padding: 3px;
+  margin: 3px;
+  width: 80px;
 }
 
 button {
-  background: #444;
+  background: #333;
   color: #fff;
+  padding: 5px 10px;
   border: none;
+  border-radius: 5px;
   cursor: pointer;
 }
 
 button:hover {
-  background: #666;
+  background: #555;
 }
 
 footer {
   text-align: center;
-  margin-top: 20px;
-  font-size: 0.8em;
+  padding: 15px;
+  opacity: 0.7;
+  font-size: 14px;
 }
