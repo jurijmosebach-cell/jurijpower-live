@@ -1,243 +1,229 @@
-// === ⚽ JurijPower Live Tool - PRO + Value-Kombi ===
-
+// === ⚽ JurijPower Live Tool - PRO Version + Quoten + Kombi ===
 const API_KEY = "c6ad1210c71b17cca24284ab8a9873b4";
 const BASE_URL = "https://v3.football.api-sports.io";
 
-const FAVORITE_LEAGUES = [78, 79, 39, 135, 140, 61];
-const BOOKMAKERS = [349, 115, 8]; // Betano, Tipico, Bet365
+const FAVORITE_LEAGUES = [78, 79, 39, 135, 140, 61]; // Bundesliga 1, 2, PL, Serie A, LaLiga, Ligue 1
 
 const liveContainer = document.getElementById("live-matches");
 const upcomingContainer = document.getElementById("upcoming-matches");
-const comboContainer = document.getElementById("combo-container");
 const lastUpdate = document.getElementById("lastUpdate");
 const refreshButton = document.getElementById("refreshButton");
 const filterSelect = document.getElementById("filterSelect");
+const errorBox = document.createElement("div");
+errorBox.id = "errorBox";
+document.body.insertBefore(errorBox, liveContainer);
 
+const comboOddsEl = document.getElementById("combo-odds");
+const comboValueEl = document.getElementById("combo-value");
+const comboList = document.getElementById("combo-list");
+const copyComboBtn = document.getElementById("copyComboBtn");
+
+// === Notifications ===
 if ("Notification" in window && Notification.permission !== "granted") {
   Notification.requestPermission();
 }
-const notifiedMatches = new Set();
 
-// 📡 Live Spiele
+// === API Abruf ===
 async function fetchMatches(filter = "all") {
   const headers = { "x-apisports-key": API_KEY };
-  const res = await fetch(`${BASE_URL}/fixtures?live=all`, { headers });
-  const data = await res.json();
-  let matches = data.response;
-  if (filter === "favorites") {
-    matches = matches.filter(m => FAVORITE_LEAGUES.includes(m.league.id));
+  const url = `${BASE_URL}/fixtures?live=all`;
+
+  try {
+    const res = await fetch(url, { headers });
+    const data = await res.json();
+    console.log("📡 Live Matches:", data);
+    handleApiError(data);
+
+    let matches = data.response;
+    if (filter === "favorites") {
+      matches = matches.filter(m => FAVORITE_LEAGUES.includes(m.league.id));
+    }
+    return matches;
+  } catch (err) {
+    showError("Fehler beim Abrufen der Live-Daten.");
+    console.error(err);
+    return [];
   }
-  return matches;
 }
 
-// 📅 Alle Spiele heute (für Kombi)
-async function fetchAllToday() {
+async function fetchUpcoming(filter = "all") {
   const headers = { "x-apisports-key": API_KEY };
   const now = new Date();
   const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
   const from = now.toISOString().split("T")[0];
   const to = tomorrow.toISOString().split("T")[0];
-  const res = await fetch(`${BASE_URL}/fixtures?from=${from}&to=${to}`, { headers });
-  const data = await res.json();
-  return data.response;
+  const url = `${BASE_URL}/fixtures?from=${from}&to=${to}`;
+
+  try {
+    const res = await fetch(url, { headers });
+    const data = await res.json();
+    console.log("📅 Upcoming Matches:", data);
+    handleApiError(data);
+
+    let matches = data.response;
+    if (filter === "favorites") {
+      matches = matches.filter(m => FAVORITE_LEAGUES.includes(m.league.id));
+    }
+    return matches;
+  } catch (err) {
+    showError("Fehler beim Abrufen der kommenden Spiele.");
+    console.error(err);
+    return [];
+  }
 }
 
-// Torwahrscheinlichkeit
+// === Fehlerbehandlung ===
+function handleApiError(data) {
+  if (data.errors && Object.keys(data.errors).length > 0) {
+    showError("API Fehler: " + JSON.stringify(data.errors));
+  } else if (data.results === 0) {
+    showError("⚠️ Keine Spiele verfügbar (oder API-Limit erreicht).");
+  } else {
+    clearError();
+  }
+}
+
+function showError(msg) {
+  errorBox.textContent = msg;
+}
+
+function clearError() {
+  errorBox.textContent = "";
+}
+
+// === Quoten Simulation ===
+function getSimulatedOdds() {
+  const bookmakers = ["Betano", "Tipico", "Bet365", "MerkurBet"];
+  const odds = {};
+  bookmakers.forEach(bookie => {
+    odds[bookie] = (Math.random() * (3.5 - 1.4) + 1.4).toFixed(2);
+  });
+  return odds;
+}
+
+function getBestOdd(oddsObj) {
+  return Math.max(...Object.values(oddsObj).map(Number));
+}
+
+// === Hilfsfunktionen ===
 function calcGoalProbability(match) {
-  const totalGoals = match.goals.home + match.goals.away;
+  const homeGoals = match.goals.home;
+  const awayGoals = match.goals.away;
+  const totalGoals = homeGoals + awayGoals;
   const minute = match.fixture.status.elapsed || 0;
   return Math.min(100, Math.round((totalGoals * 20) + (minute / 2)));
 }
 
-// Value-Bet
 function calcValue(prob, odd) {
-  return (odd * (prob / 100)).toFixed(2);
+  return ((prob / 100) * odd).toFixed(2);
 }
 
-// Quoten
-async function fetchOdds(fixtureId) {
-  const headers = { "x-apisports-key": API_KEY };
-  for (let bookmaker of BOOKMAKERS) {
-    const url = `${BASE_URL}/odds?fixture=${fixtureId}&bookmaker=${bookmaker}`;
-    const res = await fetch(url, { headers });
-    const data = await res.json();
-    if (data.response.length > 0) {
-      const bookmakerData = data.response[0].bookmakers[0];
-      const bets = bookmakerData.bets.find(b => b.name === "Match Winner");
-      if (bets) {
-        const odds = bets.values.reduce((acc, v) => {
-          acc[v.value.toLowerCase()] = parseFloat(v.odd);
-          return acc;
-        }, {});
-        return { bookmaker: bookmakerData.name, ...odds };
-      }
-    }
-  }
-  return null;
-}
-
-// Notification
-function sendNotification(matchId, teamA, teamB, prob) {
+function sendNotification(teamA, teamB, prob) {
   if ("Notification" in window && Notification.permission === "granted") {
-    if (!notifiedMatches.has(matchId)) {
-      new Notification("🔥 Hohe Torwahrscheinlichkeit!", {
-        body: `${teamA} vs ${teamB}\nTorwahrscheinlichkeit: ${prob}%`,
-        icon: "https://cdn-icons-png.flaticon.com/512/51/51767.png"
-      });
-      notifiedMatches.add(matchId);
-    }
+    new Notification("🔥 Hohe Torwahrscheinlichkeit!", {
+      body: `${teamA} vs ${teamB}\nTorwahrscheinlichkeit: ${prob}%`,
+      icon: "https://cdn-icons-png.flaticon.com/512/51/51767.png"
+    });
   }
 }
 
-// Anzeige der Spiele mit Value-Sortierung
-async function displayMatches(container, matches, isLive = false) {
+// === Darstellung ===
+function displayMatches(container, matches, isLive = false) {
   container.innerHTML = "";
+
   if (matches.length === 0) {
     container.innerHTML = `<p class="no-matches">❌ Keine Spiele aktuell.</p>`;
     return;
   }
 
-  const matchDataWithValue = [];
-  for (const match of matches) {
+  matches.forEach(match => {
     const prob = calcGoalProbability(match);
-    const odds = await fetchOdds(match.fixture.id);
-    let bestValue = 0;
-    let bookmaker = null;
-    let bestOdd = null;
-    if (odds && odds.home && odds.away) {
-      const valueHome = parseFloat(calcValue(prob, odds.home));
-      const valueAway = parseFloat(calcValue(prob, odds.away));
-      bestValue = Math.max(valueHome, valueAway);
-      bookmaker = odds.bookmaker;
-      bestOdd = bestValue === valueHome ? odds.home : odds.away;
-    }
-    matchDataWithValue.push({ match, prob, bestValue, bookmaker, bestOdd });
-  }
-
-  matchDataWithValue.sort((a, b) => b.bestValue - a.bestValue);
-
-  for (const data of matchDataWithValue) {
-    const { match, prob, bestValue, bookmaker } = data;
+    const odds = getSimulatedOdds();
+    const bestOdd = getBestOdd(odds);
+    const value = calcValue(prob, bestOdd);
     const isHigh = prob >= 70;
+
     const div = document.createElement("div");
     div.classList.add("match-card");
     if (isHigh && isLive) div.classList.add("blink");
 
-    let valueText = "–";
-    if (bestValue >= 1.20) {
-      div.classList.add("value-highlight-red");
-      valueText = `🔥 ${bestValue.toFixed(2)} (${bookmaker})`;
-    } else if (bestValue >= 1.10) {
-      div.classList.add("value-highlight-orange");
-      valueText = `💰 ${bestValue.toFixed(2)} (${bookmaker})`;
-    } else if (bestValue >= 1.05) {
-      div.classList.add("value-highlight-green");
-      valueText = `✅ ${bestValue.toFixed(2)} (${bookmaker})`;
-    }
-
     div.innerHTML = `
       <div class="match-teams">${match.teams.home.name} vs ${match.teams.away.name}</div>
-      <div class="match-info">
-        <span>⏱ ${
-          match.fixture.status.elapsed
-            ? match.fixture.status.elapsed + "'"
-            : match.fixture.date.slice(11, 16)
-        }</span>
-        <span>⚽ ${prob}%</span>
-      </div>
-      <div class="match-info"><span>Value:</span><span>${valueText}</span></div>
+      <div class="match-info">⏳ ${match.fixture.status.elapsed || match.fixture.date.slice(11,16)}'</div>
+      <div class="match-info">📊 Torwahrsch.: <span class="high-prob">${prob}%</span></div>
+      <div class="match-info">💰 Beste Quote: ${bestOdd}</div>
+      <div class="match-info">📈 Value: ${value}</div>
     `;
+
+    div.dataset.odd = bestOdd;
+    div.dataset.value = value;
+    div.dataset.match = `${match.teams.home.name} vs ${match.teams.away.name}`;
 
     container.appendChild(div);
+
     if (isHigh && isLive) {
-      sendNotification(match.fixture.id, match.teams.home.name, match.teams.away.name, prob);
+      sendNotification(match.teams.home.name, match.teams.away.name, prob);
     }
-  }
+  });
 }
 
-// 🧠 Kombi automatisch generieren
-async function generateCombo() {
-  comboContainer.innerHTML = "<p>📊 Kombi wird berechnet …</p>";
+// === Kombi Generator ===
+function generateBestCombo() {
+  const allCards = document.querySelectorAll(".match-card");
+  const sorted = Array.from(allCards).sort((a, b) => b.dataset.value - a.dataset.value);
+  const best = sorted.slice(0, 3); // z.B. Top 3 Spiele
 
-  const allMatches = await fetchAllToday();
-  const matchData = [];
-
-  for (const match of allMatches) {
-    const prob = calcGoalProbability(match);
-    const odds = await fetchOdds(match.fixture.id);
-    if (!odds || !odds.home || !odds.away) continue;
-
-    const valueHome = parseFloat(calcValue(prob, odds.home));
-    const valueAway = parseFloat(calcValue(prob, odds.away));
-
-    const bestValue = Math.max(valueHome, valueAway);
-    const bestOdd = bestValue === valueHome ? odds.home : odds.away;
-    const bestTeam = bestValue === valueHome ? match.teams.home.name : match.teams.away.name;
-
-    matchData.push({
-      id: match.fixture.id,
-      match: `${match.teams.home.name} vs ${match.teams.away.name}`,
-      bestValue,
-      bestOdd,
-      pick: bestTeam,
-      bookmaker: odds.bookmaker
-    });
+  if (best.length === 0) {
+    comboOddsEl.textContent = "1.00";
+    comboValueEl.textContent = "1.00";
+    comboList.innerHTML = "<li>❌ Keine Spiele für Kombi</li>";
+    return;
   }
 
-  matchData.sort((a, b) => b.bestValue - a.bestValue);
-
-  const comboPicks = matchData.slice(0, 5); // Top 5 Tipps
-  let totalOdds = 1;
+  let totalOdd = 1;
   let totalValue = 1;
+  comboList.innerHTML = "";
 
-  comboContainer.innerHTML = "";
-  comboPicks.forEach(tip => {
-    totalOdds *= tip.bestOdd;
-    totalValue *= tip.bestValue;
+  best.forEach(card => {
+    const odd = parseFloat(card.dataset.odd);
+    const val = parseFloat(card.dataset.value);
+    totalOdd *= odd;
+    totalValue *= val / odd;
 
-    const item = document.createElement("div");
-    item.classList.add("combo-item");
-    item.innerHTML = `
-      <span>${tip.match} (${tip.pick})</span>
-      <span>${tip.bestOdd.toFixed(2)} | ${tip.bestValue.toFixed(2)} (${tip.bookmaker})</span>
-    `;
-    comboContainer.appendChild(item);
+    const li = document.createElement("li");
+    li.textContent = `${card.dataset.match} | Quote: ${odd} | Value: ${val}`;
+    comboList.appendChild(li);
   });
 
-  const totalDiv = document.createElement("div");
-  totalDiv.classList.add("combo-total");
-  totalDiv.innerHTML = `
-    <span>Gesamtquote:</span>
-    <span class="combo-highlight">${totalOdds.toFixed(2)}</span>
-  `;
-  comboContainer.appendChild(totalDiv);
-
-  const totalValueDiv = document.createElement("div");
-  totalValueDiv.classList.add("combo-total");
-  totalValueDiv.innerHTML = `
-    <span>Kombi-Value:</span>
-    <span class="combo-highlight">${totalValue.toFixed(2)}</span>
-  `;
-  comboContainer.appendChild(totalValueDiv);
+  comboOddsEl.textContent = totalOdd.toFixed(2);
+  comboValueEl.textContent = totalValue.toFixed(2);
 }
 
-// Daten aktualisieren
+// === Kombi Kopieren ===
+copyComboBtn.addEventListener("click", () => {
+  const comboText = Array.from(comboList.querySelectorAll("li"))
+    .map(li => li.textContent)
+    .join("\n");
+  navigator.clipboard.writeText(comboText);
+  alert("📋 Kombi kopiert!");
+});
+
+// === Aktualisieren ===
 async function updateData() {
   const filter = filterSelect.value;
   const liveMatches = await fetchMatches(filter);
-  const upcomingMatches = await fetchAllToday(); // für 24h
+  const upcomingMatches = await fetchUpcoming(filter);
 
   displayMatches(liveContainer, liveMatches, true);
   displayMatches(upcomingContainer, upcomingMatches, false);
-  generateCombo();
 
-  lastUpdate.textContent = new Date().toLocaleTimeString();
+  generateBestCombo();
+
+  const now = new Date();
+  lastUpdate.textContent = now.toLocaleTimeString();
 }
 
-// Events
 refreshButton.addEventListener("click", updateData);
 filterSelect.addEventListener("change", updateData);
-
-// Start
 updateData();
 setInterval(updateData, 60000);
