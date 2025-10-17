@@ -3,57 +3,42 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>JurijPower Pro — Live</title>
-
-  <!-- Manifest & PWA -->
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#000000">
-
-  <!-- CSS -->
+  <title>JurijPower Live ⚽ Pro</title>
   <link rel="stylesheet" href="style.css" />
-
-  <!-- Icon -->
-  <link rel="icon" type="image/png" href="icon.png" />
+  <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/51/51767.png" />
 </head>
 <body>
   <header>
-    <h1>⚽ JurijPower Pro — Live</h1>
-    <p>Live-Wetten Trends (Fußball)</p>
+    <h1>⚽ JurijPower Live – Pro Version</h1>
+    <p id="lastUpdate">Letzte Aktualisierung: --:--:--</p>
+    <div class="filter-container">
+      <label for="filter">🔍 Filter:</label>
+      <select id="filter">
+        <option value="all">Alle Spiele</option>
+        <option value="favorites">Favoriten-Ligen</option>
+        <option value="live">Nur Live</option>
+        <option value="upcoming">Nur Kommende Spiele</option>
+      </select>
+      <button id="refreshButton">🔄 Aktualisieren</button>
+    </div>
   </header>
 
   <main>
-    <!-- Live Spiele -->
     <section>
-      <h2>📡 Live Spiele</h2>
-      <button id="refreshButton">🔄 Aktualisieren</button>
-      <div id="live-matches" class="match-container"></div>
+      <h2>📡 Live-Spiele</h2>
+      <div id="live-matches" class="matches"></div>
     </section>
 
-    <!-- Kommende Spiele -->
     <section>
       <h2>⏳ Kommende Spiele (24h)</h2>
-      <div id="upcoming-matches" class="match-container"></div>
-    </section>
-
-    <!-- Letztes Update -->
-    <section>
-      <p>🕒 Letztes Update: <span id="lastUpdate">–</span></p>
+      <div id="upcoming-matches" class="matches"></div>
     </section>
   </main>
 
   <footer>
-    <p>JurijPower Pro — Live Score & Value Tool ⚡</p>
+    <p>© 2025 JurijPower ⚽ | Live-Daten powered by API-FOOTBALL</p>
   </footer>
 
-  <!-- JS -->
-  <script src="app.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
-<div id="league-filter" class="filter-container"></div>
-<h2>📡 Live Spiele</h2>
-<div id="live-matches"></div>
-
-<h2>⏳ Kommende Spiele (48h)</h2>
-<div id="upcoming-matches"></div>
-
-<p>🕒 Letztes Update: <span id="lastUpdate"></span></p>
