@@ -3,43 +3,37 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>JurijPower Pro — Live</title>
+  <title>JurijPower Live ⚽</title>
   <link rel="stylesheet" href="style.css" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icon.png" />
+  <meta name="theme-color" content="#000000">
 </head>
 <body>
   <header>
-    <h1>⚽ JurijPower Pro — Live</h1>
-    <p>Live-Wetten Trends (Fußball)</p>
+    <h1>⚡ JurijPower Live</h1>
+    <button id="refreshButton">🔄 Aktualisieren</button>
+    <p>⏳ Letztes Update: <span id="lastUpdate">-</span></p>
   </header>
 
-  <section>
-    <div class="controls">
-      🏆 Liga:
-      <select id="league-filter">
-        <option value="">Alle Ligen</option>
-      </select>
-      <button id="refreshButton">🔄 Aktualisieren</button>
-    </div>
+  <main>
+    <section>
+      <h2>📡 Live Spiele</h2>
+      <div id="live-matches" class="matches"></div>
+    </section>
 
-    <h2>📡 Live Spiele</h2>
-    <div id="live-matches"></div>
-  </section>
+    <section>
+      <h2>🗓️ Kommende Spiele (24h)</h2>
+      <div id="upcoming-matches" class="matches"></div>
+    </section>
 
-  <section>
-    <h2>⏳ Kommende Spiele (24h)</h2>
-    <div class="controls">
-      🏆 Liga:
-      <select id="league-filter-upcoming">
-        <option value="">Alle Ligen</option>
-      </select>
-    </div>
-    <div id="upcoming-matches"></div>
-  </section>
-
-  <footer>
-    <p>🕒 Letztes Update: <span id="lastUpdate">–</span></p>
-    <p>JurijPower Pro — Live Score App</p>
-  </footer>
+    <section id="kombi-section">
+      <h2>🧮 Kombi-Wetten Rechner</h2>
+      <p>📊 Kombi Quote: <span id="kombi-quote">0.00</span></p>
+      <p>💶 Einsatz: <input type="number" id="kombi-einsatz" placeholder="€" /></p>
+      <p>🪙 Möglicher Gewinn: <span id="kombi-gewinn">0 €</span></p>
+    </section>
+  </main>
 
   <script src="app.js"></script>
 </body>
