@@ -139,3 +139,46 @@ footer {
     padding: 12px;
   }
 }
+.filter-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 15px;
+}
+
+.league-checkbox {
+  background: #222;
+  color: #fff;
+  padding: 5px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.league-checkbox input {
+  margin-right: 5px;
+}
+
+.match-card {
+  background: #333;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+}
+
+.bar-bg {
+  background: #555;
+  height: 10px;
+  border-radius: 5px;
+  overflow: hidden;
+  margin-bottom: 5px;
+}
+
+.bar-fill {
+  height: 10px;
+  transition: width 0.5s;
+}
+
+.bar-label {
+  font-size: 13px;
+  margin-bottom: 3px;
+}
