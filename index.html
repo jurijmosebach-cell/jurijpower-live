@@ -3,103 +3,49 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#000000" />
   <title>JurijPower Pro — Live</title>
 
-  <!-- Manifest für App-Install -->
+  <!-- Manifest & PWA -->
   <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#000000">
 
-  <!-- Favicon/Icon -->
-  <link rel="icon" href="icon.png" type="image/png">
+  <!-- CSS -->
+  <link rel="stylesheet" href="style.css" />
 
-  <!-- Schrift & Styles -->
-  <style>
-    body {
-      background-color: #000;
-      color: white;
-      font-family: Arial, sans-serif;
-      padding: 10px;
-    }
-    h1, h2, h3 {
-      text-align: center;
-    }
-    .match-card {
-      background: #1a1a1a;
-      padding: 10px;
-      margin-bottom: 10px;
-      border-radius: 10px;
-      box-shadow: 0 0 5px #444;
-    }
-    .match-card h3 {
-      margin-top: 0;
-    }
-    .match-card input {
-      background: #333;
-      border: 1px solid #666;
-      color: white;
-      padding: 3px;
-      margin: 5px 0;
-      width: 100px;
-    }
-    .match-card span {
-      font-weight: bold;
-    }
-    .header {
-      text-align: center;
-      margin-bottom: 15px;
-    }
-    #refreshButton {
-      background: #444;
-      color: white;
-      padding: 6px 12px;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    #refreshButton:hover {
-      background: #666;
-    }
-    .update-time {
-      text-align: center;
-      font-size: 0.9em;
-      margin-top: 10px;
-      color: #ccc;
-    }
-    .section-title {
-      font-size: 1.3em;
-      margin-top: 20px;
-      margin-bottom: 10px;
-      text-align: center;
-    }
-  </style>
+  <!-- Icon -->
+  <link rel="icon" type="image/png" href="icon.png" />
 </head>
 <body>
-
-  <div class="header">
+  <header>
     <h1>⚽ JurijPower Pro — Live</h1>
     <p>Live-Wetten Trends (Fußball)</p>
-    <button id="refreshButton">🔄 Aktualisieren</button>
-  </div>
+  </header>
 
-  <div>
-    <h2 class="section-title">📡 Live Spiele</h2>
-    <div id="live-matches"></div>
-  </div>
+  <main>
+    <!-- Live Spiele -->
+    <section>
+      <h2>📡 Live Spiele</h2>
+      <button id="refreshButton">🔄 Aktualisieren</button>
+      <div id="live-matches" class="match-container"></div>
+    </section>
 
-  <div>
-    <h2 class="section-title">⏳ Kommende Spiele (24h)</h2>
-    <div id="upcoming-matches"></div>
-  </div>
+    <!-- Kommende Spiele -->
+    <section>
+      <h2>⏳ Kommende Spiele (24h)</h2>
+      <div id="upcoming-matches" class="match-container"></div>
+    </section>
 
-  <div class="update-time">
-    🕒 Letztes Update: <span id="lastUpdate">–</span>
-  </div>
+    <!-- Letztes Update -->
+    <section>
+      <p>🕒 Letztes Update: <span id="lastUpdate">–</span></p>
+    </section>
+  </main>
 
-  <footer style="text-align:center; margin-top: 20px; color: #888;">
-    JurijPower Pro — Live Score App
+  <footer>
+    <p>JurijPower Pro — Live Score & Value Tool ⚡</p>
   </footer>
 
-  <!-- Hauptscript -->
-  <script src="script.js"></script>
+  <!-- JS -->
+  <script src="app.js"></script>
 </body>
 </html>
