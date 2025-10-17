@@ -1,5 +1,4 @@
-// === ⚽ JurijPower Live Tool - PRO Version ===
-// 📊 Quoten (Betano, Tipico, Bet365) + 🧮 Value-Bet Berechnung + 🔔 Notifications + Sortierung
+// === ⚽ JurijPower Live Tool - PRO + Value-Kombi ===
 
 const API_KEY = "c6ad1210c71b17cca24284ab8a9873b4";
 const BASE_URL = "https://v3.football.api-sports.io";
@@ -9,6 +8,7 @@ const BOOKMAKERS = [349, 115, 8]; // Betano, Tipico, Bet365
 
 const liveContainer = document.getElementById("live-matches");
 const upcomingContainer = document.getElementById("upcoming-matches");
+const comboContainer = document.getElementById("combo-container");
 const lastUpdate = document.getElementById("lastUpdate");
 const refreshButton = document.getElementById("refreshButton");
 const filterSelect = document.getElementById("filterSelect");
@@ -18,7 +18,7 @@ if ("Notification" in window && Notification.permission !== "granted") {
 }
 const notifiedMatches = new Set();
 
-// === 📡 Live Spiele laden ===
+// 📡 Live Spiele
 async function fetchMatches(filter = "all") {
   const headers = { "x-apisports-key": API_KEY };
   const res = await fetch(`${BASE_URL}/fixtures?live=all`, { headers });
@@ -30,8 +30,8 @@ async function fetchMatches(filter = "all") {
   return matches;
 }
 
-// === 📅 Kommende Spiele ===
-async function fetchUpcoming(filter = "all") {
+// 📅 Alle Spiele heute (für Kombi)
+async function fetchAllToday() {
   const headers = { "x-apisports-key": API_KEY };
   const now = new Date();
   const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
@@ -39,26 +39,22 @@ async function fetchUpcoming(filter = "all") {
   const to = tomorrow.toISOString().split("T")[0];
   const res = await fetch(`${BASE_URL}/fixtures?from=${from}&to=${to}`, { headers });
   const data = await res.json();
-  let matches = data.response;
-  if (filter === "favorites") {
-    matches = matches.filter(m => FAVORITE_LEAGUES.includes(m.league.id));
-  }
-  return matches;
+  return data.response;
 }
 
-// === 🧮 Torwahrscheinlichkeit ===
+// Torwahrscheinlichkeit
 function calcGoalProbability(match) {
   const totalGoals = match.goals.home + match.goals.away;
   const minute = match.fixture.status.elapsed || 0;
   return Math.min(100, Math.round((totalGoals * 20) + (minute / 2)));
 }
 
-// === 🧮 Value-Bet ===
+// Value-Bet
 function calcValue(prob, odd) {
   return (odd * (prob / 100)).toFixed(2);
 }
 
-// === 📊 Quoten abrufen ===
+// Quoten
 async function fetchOdds(fixtureId) {
   const headers = { "x-apisports-key": API_KEY };
   for (let bookmaker of BOOKMAKERS) {
@@ -80,7 +76,7 @@ async function fetchOdds(fixtureId) {
   return null;
 }
 
-// === 🔔 Notification ===
+// Notification
 function sendNotification(matchId, teamA, teamB, prob) {
   if ("Notification" in window && Notification.permission === "granted") {
     if (!notifiedMatches.has(matchId)) {
@@ -93,13 +89,7 @@ function sendNotification(matchId, teamA, teamB, prob) {
   }
 }
 
-// === 🟡 Blinkeffekt ===
-function toggleBlinkEffect(element, shouldBlink) {
-  if (shouldBlink) element.classList.add("blink");
-  else element.classList.remove("blink");
-}
-
-// === 🧾 Spiele anzeigen (inkl. Sortierung nach Value) ===
+// Anzeige der Spiele mit Value-Sortierung
 async function displayMatches(container, matches, isLive = false) {
   container.innerHTML = "";
   if (matches.length === 0) {
@@ -107,37 +97,31 @@ async function displayMatches(container, matches, isLive = false) {
     return;
   }
 
-  // ➕ Liste mit Value vorbereiten
   const matchDataWithValue = [];
-
   for (const match of matches) {
     const prob = calcGoalProbability(match);
-    const matchId = match.fixture.id;
-    const odds = await fetchOdds(matchId);
-
+    const odds = await fetchOdds(match.fixture.id);
     let bestValue = 0;
     let bookmaker = null;
+    let bestOdd = null;
     if (odds && odds.home && odds.away) {
       const valueHome = parseFloat(calcValue(prob, odds.home));
       const valueAway = parseFloat(calcValue(prob, odds.away));
       bestValue = Math.max(valueHome, valueAway);
       bookmaker = odds.bookmaker;
+      bestOdd = bestValue === valueHome ? odds.home : odds.away;
     }
-
-    matchDataWithValue.push({ match, prob, bestValue, bookmaker });
+    matchDataWithValue.push({ match, prob, bestValue, bookmaker, bestOdd });
   }
 
-  // 📊 Sortieren nach Value (höchster zuerst)
   matchDataWithValue.sort((a, b) => b.bestValue - a.bestValue);
 
-  // 🧱 Anzeige
   for (const data of matchDataWithValue) {
     const { match, prob, bestValue, bookmaker } = data;
     const isHigh = prob >= 70;
-
     const div = document.createElement("div");
     div.classList.add("match-card");
-    toggleBlinkEffect(div, isHigh && isLive);
+    if (isHigh && isLive) div.classList.add("blink");
 
     let valueText = "–";
     if (bestValue >= 1.20) {
@@ -165,29 +149,95 @@ async function displayMatches(container, matches, isLive = false) {
     `;
 
     container.appendChild(div);
-
     if (isHigh && isLive) {
       sendNotification(match.fixture.id, match.teams.home.name, match.teams.away.name, prob);
     }
   }
 }
 
-// === 🔁 Daten aktualisieren ===
+// 🧠 Kombi automatisch generieren
+async function generateCombo() {
+  comboContainer.innerHTML = "<p>📊 Kombi wird berechnet …</p>";
+
+  const allMatches = await fetchAllToday();
+  const matchData = [];
+
+  for (const match of allMatches) {
+    const prob = calcGoalProbability(match);
+    const odds = await fetchOdds(match.fixture.id);
+    if (!odds || !odds.home || !odds.away) continue;
+
+    const valueHome = parseFloat(calcValue(prob, odds.home));
+    const valueAway = parseFloat(calcValue(prob, odds.away));
+
+    const bestValue = Math.max(valueHome, valueAway);
+    const bestOdd = bestValue === valueHome ? odds.home : odds.away;
+    const bestTeam = bestValue === valueHome ? match.teams.home.name : match.teams.away.name;
+
+    matchData.push({
+      id: match.fixture.id,
+      match: `${match.teams.home.name} vs ${match.teams.away.name}`,
+      bestValue,
+      bestOdd,
+      pick: bestTeam,
+      bookmaker: odds.bookmaker
+    });
+  }
+
+  matchData.sort((a, b) => b.bestValue - a.bestValue);
+
+  const comboPicks = matchData.slice(0, 5); // Top 5 Tipps
+  let totalOdds = 1;
+  let totalValue = 1;
+
+  comboContainer.innerHTML = "";
+  comboPicks.forEach(tip => {
+    totalOdds *= tip.bestOdd;
+    totalValue *= tip.bestValue;
+
+    const item = document.createElement("div");
+    item.classList.add("combo-item");
+    item.innerHTML = `
+      <span>${tip.match} (${tip.pick})</span>
+      <span>${tip.bestOdd.toFixed(2)} | ${tip.bestValue.toFixed(2)} (${tip.bookmaker})</span>
+    `;
+    comboContainer.appendChild(item);
+  });
+
+  const totalDiv = document.createElement("div");
+  totalDiv.classList.add("combo-total");
+  totalDiv.innerHTML = `
+    <span>Gesamtquote:</span>
+    <span class="combo-highlight">${totalOdds.toFixed(2)}</span>
+  `;
+  comboContainer.appendChild(totalDiv);
+
+  const totalValueDiv = document.createElement("div");
+  totalValueDiv.classList.add("combo-total");
+  totalValueDiv.innerHTML = `
+    <span>Kombi-Value:</span>
+    <span class="combo-highlight">${totalValue.toFixed(2)}</span>
+  `;
+  comboContainer.appendChild(totalValueDiv);
+}
+
+// Daten aktualisieren
 async function updateData() {
   const filter = filterSelect.value;
   const liveMatches = await fetchMatches(filter);
-  const upcomingMatches = await fetchUpcoming(filter);
+  const upcomingMatches = await fetchAllToday(); // für 24h
 
   displayMatches(liveContainer, liveMatches, true);
   displayMatches(upcomingContainer, upcomingMatches, false);
+  generateCombo();
 
   lastUpdate.textContent = new Date().toLocaleTimeString();
 }
 
-// === 🧭 Events ===
+// Events
 refreshButton.addEventListener("click", updateData);
 filterSelect.addEventListener("change", updateData);
 
-// === 🚀 Start ===
+// Start
 updateData();
 setInterval(updateData, 60000);
