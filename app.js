@@ -1,7 +1,5 @@
 // === ⚽ JurijPower Live Tool PRO ===
-// Mit Live-Spielen, kommenden Spielen, Tor- & Sieg-Wahrscheinlichkeit
-
-// === API KEY ===
+// API KEY + BASE URL
 const API_KEY = "c6ad1210c71b17cca24284ab8a9873b4";
 const BASE_URL = "https://v3.football.api-sports.io";
 
@@ -19,24 +17,24 @@ async function fetchMatches() {
   return data.response;
 }
 
-// === STATISTIKEN HOLEN ===
-async function fetchStats(fixtureId) {
-  const headers = { "x-apisports-key": API_KEY };
-  const url = `${BASE_URL}/fixtures/statistics?fixture=${fixtureId}`;
-  const res = await fetch(url, { headers });
-  const data = await res.json();
-  return data.response;
-}
-
 // === KOMMENDE SPIELE HOLEN (24h) ===
 async function fetchUpcoming() {
   const headers = { "x-apisports-key": API_KEY };
   const now = new Date();
   const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-  const todayStr = now.toISOString().split("T")[0];
-  const tomorrowStr = tomorrow.toISOString().split("T")[0];
+  const from = now.toISOString().split("T")[0];
+  const to = tomorrow.toISOString().split("T")[0];
 
-  const url = `${BASE_URL}/fixtures?from=${todayStr}&to=${tomorrowStr}`;
+  const url = `${BASE_URL}/fixtures?from=${from}&to=${to}`;
+  const res = await fetch(url, { headers });
+  const data = await res.json();
+  return data.response;
+}
+
+// === STATISTIKEN HOLEN ===
+async function fetchStats(fixtureId) {
+  const headers = { "x-apisports-key": API_KEY };
+  const url = `${BASE_URL}/fixtures/statistics?fixture=${fixtureId}`;
   const res = await fetch(url, { headers });
   const data = await res.json();
   return data.response;
@@ -96,7 +94,7 @@ function calculateProbabilities(statsA, statsB, scoreA, scoreB, minute) {
   };
 }
 
-// === BALKEN FÜR ANZEIGE ===
+// === HILFSFUNKTION: BALKEN ===
 function createBar(label, value, color) {
   return `
     <div class="bar-label">${label} ${value}%</div>
@@ -112,16 +110,16 @@ async function renderLiveMatches() {
   const matches = await fetchMatches();
   liveContainer.innerHTML = "";
 
-  if (!matches || matches.length === 0) {
-    liveContainer.innerHTML = "❌ Keine Live-Spiele aktuell.";
+  if (matches.length === 0) {
+    liveContainer.innerHTML = "❌ Keine Live-Spiele zurzeit";
     return;
   }
 
   for (const match of matches) {
     const fixtureId = match.fixture.id;
     const stats = await fetchStats(fixtureId);
-
     if (stats.length < 2) continue;
+
     const statsA = stats[0].statistics;
     const statsB = stats[1].statistics;
 
@@ -154,39 +152,40 @@ async function renderLiveMatches() {
 }
 
 // === KOMMENDE SPIELE ANZEIGEN ===
-async function renderUpcoming() {
+async function renderUpcomingMatches() {
   upcomingContainer.innerHTML = "⏳ Lade kommende Spiele...";
   const matches = await fetchUpcoming();
   upcomingContainer.innerHTML = "";
 
-  if (!matches || matches.length === 0) {
-    upcomingContainer.innerHTML = "❌ Keine kommenden Spiele in den nächsten 24h.";
+  if (matches.length === 0) {
+    upcomingContainer.innerHTML = "❌ Keine kommenden Spiele in den nächsten 24 Stunden";
     return;
   }
 
-  matches.forEach(match => {
+  for (const match of matches) {
     const teamA = match.teams.home.name;
     const teamB = match.teams.away.name;
-    const time = new Date(match.fixture.date).toLocaleString();
+    const league = match.league.name;
+    const date = new Date(match.fixture.date);
+    const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
     const card = document.createElement("div");
-    card.className = "match-card upcoming";
+    card.className = "match-card";
     card.innerHTML = `
       <h3>${teamA} vs ${teamB}</h3>
+      <p>🏆 ${league}</p>
       <p>🕒 ${time}</p>
-      <p>🏆 ${match.league.name}</p>
     `;
     upcomingContainer.appendChild(card);
-  });
+  }
 }
 
-// === AUTO UPDATE ===
+// === AUTO-UPDATE ===
 async function updateAll() {
   await renderLiveMatches();
-  await renderUpcoming();
+  await renderUpcomingMatches();
   lastUpdate.textContent = "Letzte Aktualisierung: " + new Date().toLocaleTimeString();
 }
 
-// Start
 updateAll();
 setInterval(updateAll, 30000);
