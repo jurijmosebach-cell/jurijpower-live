@@ -1,13 +1,13 @@
 body {
   font-family: Arial, sans-serif;
   background: #fff;
-  color: #000;
   margin: 0;
   padding: 20px;
 }
 
-h1, h2 {
-  margin-top: 20px;
+h1 {
+  font-size: 24px;
+  margin-bottom: 10px;
 }
 
 .controls {
@@ -16,78 +16,39 @@ h1, h2 {
   margin-bottom: 10px;
 }
 
-button {
-  cursor: pointer;
-  padding: 5px 10px;
-  background: #007bff;
-  color: white;
-  border: none;
-  border-radius: 5px;
-}
-
-button:hover {
-  background: #0056b3;
-}
-
 .match-card {
-  border: 1px solid #ddd;
+  border: 1px solid #ccc;
   padding: 10px;
-  margin: 8px 0;
-  border-radius: 5px;
-  background: #f8f8f8;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  background: #f9f9f9;
 }
 
-.match-teams {
-  font-weight: bold;
+.match-card.blink {
+  animation: blink 1s infinite;
 }
 
-.match-info {
-  font-size: 0.9em;
+@keyframes blink {
+  0% { background: #f9f9f9; }
+  50% { background: #ffe6e6; }
+  100% { background: #f9f9f9; }
 }
 
 .high-prob {
   font-weight: bold;
-  color: red;
+  color: green;
 }
 
-#combo-box {
-  background: #222;
+.combo-box {
+  background: #111;
   color: #0f0;
-  padding: 10px;
-  border-radius: 5px;
-  margin-top: 10px;
+  padding: 15px;
+  border-radius: 10px;
+  margin-top: 20px;
 }
 
-#combo-box ul {
-  list-style: none;
-  padding: 0;
-}
-
-#combo-box li {
-  font-size: 0.9em;
-}
-
-#combo-box button {
-  background: #28a745;
-}
-
-.no-matches {
-  color: #888;
-}
-
-#errorBox {
-  color: red;
-  font-weight: bold;
-}
-
-/* === Blinkeffekt bei hoher Wahrscheinlichkeit === */
-.blink {
-  animation: blinkEffect 1s linear infinite;
-  border-left: 5px solid #f1c40f;
-}
-
-@keyframes blinkEffect {
-  0% { background-color: #f8f8f8; }
-  50% { background-color: #ffb703; }
-  100% { background-color: #f8f8f8; }
+footer {
+  margin-top: 20px;
+  font-size: 12px;
+  color: #666;
 }
