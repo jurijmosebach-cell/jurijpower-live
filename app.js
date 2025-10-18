@@ -36,27 +36,43 @@ async function loadData() {
   buildBestCombo([...oddsLive.response, ...oddsUpcoming.response]);
 }
 
-function calculateWinProbabilities(homeStats, awayStats) {
-  const homeWinRate = homeStats?.form?.split("").filter(l => l === "W").length / (homeStats?.form?.length || 1);
-  const awayWinRate = awayStats?.form?.split("").filter(l => l === "W").length / (awayStats?.form?.length || 1);
-  const pHome = (homeWinRate + (1 - awayWinRate)) / 2;
-  const pAway = (awayWinRate + (1 - homeWinRate)) / 2;
-  const pDraw = 1 - (pHome + pAway);
-  return { pHome, pDraw, pAway };
+function calculateProbabilitiesFromOdds(homeOdd, drawOdd, awayOdd) {
+  if (!homeOdd || !drawOdd || !awayOdd) return { pHome: 0, pDraw: 0, pAway: 0 };
+
+  const pHome = 1 / parseFloat(homeOdd);
+  const pDraw = 1 / parseFloat(drawOdd);
+  const pAway = 1 / parseFloat(awayOdd);
+  const sum = pHome + pDraw + pAway;
+
+  return {
+    pHome: pHome / sum,
+    pDraw: pDraw / sum,
+    pAway: pAway / sum
+  };
 }
 
-function calculateOverUnderProbabilities(homeStats, awayStats) {
-  const homeGoals = homeStats.goals.for.total.average.home;
-  const awayGoals = awayStats.goals.for.total.average.away;
-  const expectedGoals = parseFloat(homeGoals) + parseFloat(awayGoals);
-  const pOver = Math.min(0.95, expectedGoals / 4);
-  const pUnder = 1 - pOver;
-  return { pOver, pUnder };
+function calculateOverUnderProbabilities(overOdd, underOdd) {
+  if (!overOdd || !underOdd) return { pOver: 0, pUnder: 0 };
+
+  const pOver = 1 / parseFloat(overOdd);
+  const pUnder = 1 / parseFloat(underOdd);
+  const sum = pOver + pUnder;
+
+  return {
+    pOver: pOver / sum,
+    pUnder: pUnder / sum
+  };
 }
 
 function calculateValue(prob, odd) {
   if (!odd || odd <= 0) return 0;
-  return prob * odd - 1;
+  return prob * parseFloat(odd) - 1;
+}
+
+function getValueClass(value) {
+  if (value >= 0.05) return "value-high";
+  if (value >= 0) return "value-mid";
+  return "value-low";
 }
 
 function renderMatches(matches, odds, containerId) {
@@ -82,11 +98,8 @@ function renderMatches(matches, odds, containerId) {
     const overOdd = betOU?.values?.find(v => v.value === "Over 2.5")?.odd;
     const underOdd = betOU?.values?.find(v => v.value === "Under 2.5")?.odd;
 
-    const homeStats = match.teams.home;
-    const awayStats = match.teams.away;
-
-    const { pHome, pDraw, pAway } = calculateWinProbabilities(match.teams.home, match.teams.away);
-    const { pOver, pUnder } = calculateOverUnderProbabilities(match.teams.home, match.teams.away);
+    const { pHome, pDraw, pAway } = calculateProbabilitiesFromOdds(homeOdd, drawOdd, awayOdd);
+    const { pOver, pUnder } = calculateOverUnderProbabilities(overOdd, underOdd);
 
     const valHome = calculateValue(pHome, homeOdd);
     const valDraw = calculateValue(pDraw, drawOdd);
@@ -102,13 +115,13 @@ function renderMatches(matches, odds, containerId) {
         <span>${match.fixture.status.short}</span>
       </div>
       <div class="odds-line">
-        <span>1: ${homeOdd || "-"} | <span class="${valHome>=0?'value-positive':'value-negative'}">${(valHome*100).toFixed(1)}%</span></span>
-        <span>X: ${drawOdd || "-"} | <span class="${valDraw>=0?'value-positive':'value-negative'}">${(valDraw*100).toFixed(1)}%</span></span>
-        <span>2: ${awayOdd || "-"} | <span class="${valAway>=0?'value-positive':'value-negative'}">${(valAway*100).toFixed(1)}%</span></span>
+        <span>1: ${homeOdd || "-"} | <span class="${getValueClass(valHome)}">${(valHome*100).toFixed(1)}%</span></span>
+        <span>X: ${drawOdd || "-"} | <span class="${getValueClass(valDraw)}">${(valDraw*100).toFixed(1)}%</span></span>
+        <span>2: ${awayOdd || "-"} | <span class="${getValueClass(valAway)}">${(valAway*100).toFixed(1)}%</span></span>
       </div>
       <div class="odds-line">
-        <span>Over 2.5: ${overOdd || "-"} | <span class="${valOver>=0?'value-positive':'value-negative'}">${(valOver*100).toFixed(1)}%</span></span>
-        <span>Under 2.5: ${underOdd || "-"} | <span class="${valUnder>=0?'value-positive':'value-negative'}">${(valUnder*100).toFixed(1)}%</span></span>
+        <span>Over 2.5: ${overOdd || "-"} | <span class="${getValueClass(valOver)}">${(valOver*100).toFixed(1)}%</span></span>
+        <span>Under 2.5: ${underOdd || "-"} | <span class="${getValueClass(valUnder)}">${(valUnder*100).toFixed(1)}%</span></span>
       </div>
     `;
     container.appendChild(div);
@@ -121,24 +134,31 @@ function buildBestCombo(odds) {
   const combos = [];
 
   odds.forEach(o => {
+    if (!o.bookmakers || o.bookmakers.length === 0) return;
+
     const bet1x2 = o.bookmakers[0].bets.find(b => b.name === "Match Winner");
     const betOU = o.bookmakers[0].bets.find(b => b.name.includes("Over/Under"));
+
     if (bet1x2) {
       bet1x2.values.forEach(v => {
-        const val = calculateValue(1/parseFloat(v.odd), parseFloat(v.odd));
+        const prob = 1 / parseFloat(v.odd);
+        const norm = prob / (bet1x2.values.reduce((a, b) => a + 1 / parseFloat(b.odd), 0));
+        const val = calculateValue(norm, v.odd);
         combos.push({ match: o.fixture, market: v.value, odd: v.odd, val });
       });
     }
     if (betOU) {
       betOU.values.forEach(v => {
-        const val = calculateValue(1/parseFloat(v.odd), parseFloat(v.odd));
+        const prob = 1 / parseFloat(v.odd);
+        const norm = prob / (betOU.values.reduce((a, b) => a + 1 / parseFloat(b.odd), 0));
+        const val = calculateValue(norm, v.odd);
         combos.push({ match: o.fixture, market: v.value, odd: v.odd, val });
       });
     }
   });
 
-  combos.sort((a,b) => b.val - a.val);
-  const best = combos.slice(0,3);
+  combos.sort((a, b) => b.val - a.val);
+  const best = combos.slice(0, 3);
 
   let totalOdds = 1;
   let totalVal = 0;
