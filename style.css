@@ -85,3 +85,17 @@ pre {
   border-radius: 8px;
   white-space: pre-wrap;
 }
+.value-high {
+  color: #00e676; /* grün */
+  font-weight: bold;
+}
+
+.value-mid {
+  color: #ffeb3b; /* gelb */
+  font-weight: bold;
+}
+
+.value-low {
+  color: #f44336; /* rot */
+  font-weight: bold;
+}
