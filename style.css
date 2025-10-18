@@ -1,4 +1,4 @@
-/* 🌐 Grunddesign */
+/* 🌐 Grundlayout */
 * {
   box-sizing: border-box;
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
@@ -20,8 +20,8 @@ header {
 
 header h1 {
   font-size: 1.8rem;
-  margin-bottom: 5px;
   color: #38bdf8;
+  margin-bottom: 5px;
 }
 
 header p {
@@ -29,7 +29,7 @@ header p {
   color: #94a3b8;
 }
 
-/* 🧭 Filterbereich */
+/* 🎛️ Filterbereich */
 .controls {
   display: flex;
   flex-wrap: wrap;
@@ -76,7 +76,7 @@ header p {
   color: white;
 }
 
-/* 🏟 Spielcontainer */
+/* 🏟 Spielkarten */
 .match-section {
   margin-bottom: 25px;
 }
@@ -94,11 +94,11 @@ header p {
 
 .match-card {
   background: #1e293b;
-  padding: 10px;
+  padding: 12px;
   border-radius: 10px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   transition: 0.2s;
 }
 
@@ -106,7 +106,7 @@ header p {
   background: #334155;
 }
 
-/* ⚽ Teamnamen mit Logos */
+/* ⚽ Teams */
 .match-teams {
   display: flex;
   justify-content: space-between;
@@ -122,8 +122,8 @@ header p {
 }
 
 .team img {
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   object-fit: contain;
   border-radius: 50%;
   background: #fff;
@@ -147,7 +147,7 @@ header p {
   background: #fff;
 }
 
-/* 🕒 Zusatzinfos */
+/* 🕒 Infos */
 .match-info {
   display: flex;
   justify-content: space-between;
@@ -155,7 +155,13 @@ header p {
   color: #94a3b8;
 }
 
-/* 📊 Value Badges */
+/* 📊 Value */
+.odds-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+}
+
 .value {
   font-weight: bold;
   padding: 2px 6px;
@@ -177,7 +183,7 @@ header p {
   color: white;
 }
 
-/* 🧾 Kombi-Schein */
+/* 🧾 Kombi */
 .combo-section {
   background: #1e293b;
   padding: 15px;
@@ -222,7 +228,7 @@ header p {
   color: white;
 }
 
-/* 📱 Responsive Design */
+/* 📱 Responsive */
 @media (max-width: 600px) {
   .controls {
     flex-direction: column;
@@ -230,8 +236,8 @@ header p {
   }
 
   .team img {
-    width: 20px;
-    height: 20px;
+    width: 22px;
+    height: 22px;
   }
 
   .combo-footer {
