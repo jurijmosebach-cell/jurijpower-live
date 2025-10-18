@@ -28,6 +28,7 @@ button {
   font-weight: bold;
   border-radius: 8px;
   cursor: pointer;
+  transition: background 0.2s ease;
 }
 
 button:hover {
@@ -45,6 +46,13 @@ button:hover {
   background: #1f1f1f;
   padding: 1rem;
   border-radius: 8px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border 0.2s ease;
+  border: 2px solid transparent;
+}
+
+.match-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
 }
 
 .match-header {
@@ -63,28 +71,6 @@ button:hover {
   font-size: 0.9rem;
 }
 
-.value-positive {
-  color: #4caf50;
-  font-weight: bold;
-}
-
-.value-negative {
-  color: #f44336;
-  font-weight: bold;
-}
-
-section h2 {
-  padding: 0.5rem 1rem;
-  background: #2a2a2a;
-  margin-top: 1rem;
-}
-
-pre {
-  background: #1f1f1f;
-  padding: 1rem;
-  border-radius: 8px;
-  white-space: pre-wrap;
-}
 .value-high {
   color: #00e676; /* grün */
   font-weight: bold;
@@ -99,17 +85,29 @@ pre {
   color: #f44336; /* rot */
   font-weight: bold;
 }
-.value-high {
-  color: #00e676; /* grün */
-  font-weight: bold;
+
+/* farbige Rahmen je nach Value */
+.card-high {
+  border-color: #00e676;
 }
 
-.value-mid {
-  color: #ffeb3b; /* gelb */
-  font-weight: bold;
+.card-mid {
+  border-color: #ffeb3b;
 }
 
-.value-low {
-  color: #ff5252; /* rot */
-  font-weight: bold;
+.card-low {
+  border-color: #f44336;
+}
+
+section h2 {
+  padding: 0.5rem 1rem;
+  background: #2a2a2a;
+  margin-top: 1rem;
+}
+
+pre {
+  background: #1f1f1f;
+  padding: 1rem;
+  border-radius: 8px;
+  white-space: pre-wrap;
 }
