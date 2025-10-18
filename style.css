@@ -1,68 +1,48 @@
-body {
-  font-family: Arial, sans-serif;
-  background: #f8f9fa;
-  color: #222;
-  margin: 0;
-  padding: 0;
+:root{
+  --bg:#0f1720;
+  --card:#0b1220;
+  --accent:#16a34a;
+  --muted:#9aa5b1;
+  --danger:#ef4444;
+  --glass: rgba(255,255,255,0.03);
 }
 
-header {
-  background: #222;
-  color: white;
-  padding: 15px;
-  text-align: center;
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Inter,system-ui,Segoe UI,Roboto,Arial;
+  background:linear-gradient(180deg,#071021 0%, #0f1720 100%);
+  color:#e6eef6;
+  padding:20px;
+  min-height:100vh;
 }
-
-header button {
-  background: #4caf50;
-  color: white;
-  border: none;
-  padding: 8px 12px;
-  cursor: pointer;
-  margin-top: 10px;
-  border-radius: 5px;
+header{display:flex;flex-direction:column;gap:10px;margin-bottom:14px}
+header h1{margin:0;font-size:1.25rem}
+.controls{display:flex;gap:10px;align-items:center}
+select,button{padding:8px 10px;border-radius:8px;border:none;background:var(--glass);color:var(--muted);cursor:pointer}
+button:hover{opacity:0.9}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
+.card{
+  background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  border-radius:10px;padding:12px;border:1px solid rgba(255,255,255,0.03);
+  box-shadow:0 6px 18px rgba(2,6,23,0.6);
 }
-
-section {
-  padding: 15px;
+.matchTitle{font-weight:700;font-size:1rem;margin-bottom:6px}
+.meta{display:flex;gap:8px;flex-wrap:wrap;font-size:0.85rem;color:var(--muted);margin-bottom:8px}
+.oddsRow{display:flex;gap:8px;align-items:center}
+.outcome{
+  padding:6px 8px;border-radius:8px;background:rgba(255,255,255,0.02);min-width:86px;text-align:center;
 }
-
-#liveGames, #upcomingGames {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+.prob{font-weight:700;color:#fff}
+.valuePositive{color:var(--accent);font-weight:700}
+.valueNegative{color:var(--muted)}
+.blink{animation:blink 1s linear infinite; border-left:4px solid #fbbf24;padding-left:8px}
+@keyframes blink{50%{transform:translateY(-2px)}}
+.combo{
+  background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  border-radius:10px;padding:12px;border:1px solid rgba(255,255,255,0.03);
 }
-
-.game-card {
-  background: white;
-  padding: 10px;
-  border-radius: 8px;
-  box-shadow: 0 0 5px rgba(0,0,0,0.1);
-}
-
-.comboBox {
-  background: black;
-  color: lime;
-  padding: 15px;
-  border-radius: 8px;
-}
-
-#copyCombo {
-  background: white;
-  color: black;
-  padding: 8px;
-  border-radius: 5px;
-  cursor: pointer;
-}
-
-footer {
-  text-align: center;
-  padding: 15px;
-  background: #222;
-  color: white;
-}
-
-.value {
-  font-size: 0.9em;
-  color: #777;
-}
+.comboFooter{display:flex;justify-content:space-between;align-items:center;margin-top:10px}
+.debug{white-space:pre-wrap;background:#071423;padding:10px;border-radius:8px;color:#9fb3c8;border:1px solid rgba(255,255,255,0.02)}
+.footer{margin-top:20px;color:var(--muted)}
+.tag{font-size:0.8rem;padding:4px 6px;border-radius:6px;background:rgba(255,255,255,0.02);color:var(--muted)}
