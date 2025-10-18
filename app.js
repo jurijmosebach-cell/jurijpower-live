@@ -1,73 +1,87 @@
 // ================== CONFIG ==================
-const API_KEY = "c6ad1210c71b17cca24284ab8a9873b4";
+const API_KEY = "c6ad1210c71b17cca24284ab8a9873b4"; // 👈 Hier deinen Key eintragen
 const BASE_URL = "https://v3.football.api-sports.io";
-
+const CACHE_DURATION = 5 * 60 * 1000; // 5 Minuten Cachezeit
 let comboText = "";
 
 // ================== EVENT LISTENERS ==================
-document.getElementById('refresh').addEventListener('click', loadData);
+document.getElementById('refresh').addEventListener('click', () => loadData(true));
 document.getElementById('copy-combo').addEventListener('click', () => {
   navigator.clipboard.writeText(comboText);
   alert("Kombi kopiert ✅");
 });
-document.getElementById('filter-value').addEventListener('change', loadData);
-document.getElementById('league-filter').addEventListener('change', loadData);
-document.getElementById('match-date').addEventListener('change', loadData);
+document.getElementById('filter-value').addEventListener('change', () => loadData(false));
+document.getElementById('league-filter').addEventListener('change', () => loadData(false));
+document.getElementById('match-date').addEventListener('change', () => loadData(true));
 
-// ================== API FETCH ==================
-async function fetchAPI(endpoint) {
-  try {
-    const response = await fetch(`${BASE_URL}${endpoint}`, {
-      method: "GET",
-      headers: {
-        "x-apisports-key": API_KEY,
-        "accept": "application/json"
-      }
-    });
-    const data = await response.json();
-    return data;
-  } catch (err) {
-    console.error("API Fehler:", err);
-    return { response: [] };
+// ================== API FETCH + CACHE ==================
+async function fetchAPI(endpoint, cacheKey, force = false) {
+  const now = Date.now();
+
+  // Check Cache
+  const cached = localStorage.getItem(cacheKey);
+  if (cached && !force) {
+    const parsed = JSON.parse(cached);
+    if (now - parsed.timestamp < CACHE_DURATION) {
+      return parsed.data;
+    }
   }
-}
 
-// ================== TEAM STATS ==================
-async function getTeamStats(leagueId, teamId) {
-  const year = new Date().getFullYear();
-  const stats = await fetchAPI(`/teams/statistics?league=${leagueId}&team=${teamId}&season=${year}`);
-  return stats?.response || null;
+  // Fetch von API
+  const response = await fetch(`${BASE_URL}${endpoint}`, {
+    method: "GET",
+    headers: {
+      "x-apisports-key": API_KEY,
+      "accept": "application/json"
+    }
+  });
+
+  const data = await response.json();
+
+  if (data.errors?.token) {
+    alert("⚠️ API Key fehlt oder ist ungültig!");
+    return [];
+  }
+
+  if (data.errors?.requests) {
+    alert("🚨 Du hast dein Tageslimit erreicht!");
+    return [];
+  }
+
+  // Cache speichern
+  localStorage.setItem(cacheKey, JSON.stringify({ data, timestamp: now }));
+  return data;
 }
 
 // ================== MAIN ==================
-async function loadData() {
+async function loadData(force = false) {
   document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
 
   const selectedDate = document.getElementById('match-date').value || new Date().toISOString().split('T')[0];
 
-  const liveFixtures = await fetchAPI("/fixtures?live=all");
-  const upcomingFixtures = await fetchAPI(`/fixtures?date=${selectedDate}`);
-  const oddsLive = await fetchAPI("/odds?live=all");
-  const oddsUpcoming = await fetchAPI(`/odds?date=${selectedDate}`);
+  const liveFixtures = await fetchAPI("/fixtures?live=all", "cache_live", force);
+  const upcomingFixtures = await fetchAPI(`/fixtures?date=${selectedDate}`, `cache_upcoming_${selectedDate}`, force);
+
+  const oddsLive = await fetchAPI("/odds?live=all", "cache_odds_live", force);
+  const oddsUpcoming = await fetchAPI(`/odds?date=${selectedDate}`, `cache_odds_${selectedDate}`, force);
 
   renderMatches(liveFixtures.response, oddsLive.response, "live-matches");
   renderMatches(upcomingFixtures.response, oddsUpcoming.response, "upcoming-matches");
 
-  buildBestCombo([...oddsLive.response, ...oddsUpcoming.response]);
+  buildBestCombo([...(oddsLive.response || []), ...(oddsUpcoming.response || [])]);
 }
 
 // ================== VALUE BERECHNUNG ==================
 function calculateWinProbabilities(homeStats, awayStats) {
-  if (!homeStats || !awayStats) return { pHome: 0.33, pDraw: 0.34, pAway: 0.33 };
-
   const homeForm = homeStats?.form || "";
   const awayForm = awayStats?.form || "";
+
   const homeWins = (homeForm.match(/W/g) || []).length;
   const awayWins = (awayForm.match(/W/g) || []).length;
   const games = Math.max(homeForm.length, awayForm.length, 1);
 
-  const homeGoals = parseFloat(homeStats?.goals?.for?.average?.home || 0);
-  const awayGoals = parseFloat(awayStats?.goals?.for?.average?.away || 0);
+  const homeGoals = parseFloat(homeStats?.goals?.for?.total?.average?.home || 0);
+  const awayGoals = parseFloat(awayStats?.goals?.for?.total?.average?.away || 0);
 
   const pHome = (homeWins / games) * 0.6 + (homeGoals / (homeGoals + awayGoals + 0.01)) * 0.4;
   const pAway = (awayWins / games) * 0.6 + (awayGoals / (homeGoals + awayGoals + 0.01)) * 0.4;
@@ -77,9 +91,8 @@ function calculateWinProbabilities(homeStats, awayStats) {
 }
 
 function calculateOverUnderProbabilities(homeStats, awayStats) {
-  if (!homeStats || !awayStats) return { "Over 2.5": 0.5, "Under 2.5": 0.5 };
-  const homeGoals = parseFloat(homeStats?.goals?.for?.average?.home || 0);
-  const awayGoals = parseFloat(awayStats?.goals?.for?.average?.away || 0);
+  const homeGoals = parseFloat(homeStats?.goals?.for?.total?.average?.home || 0);
+  const awayGoals = parseFloat(awayStats?.goals?.for?.total?.average?.away || 0);
   const expectedGoals = homeGoals + awayGoals;
 
   const probs = {
@@ -97,21 +110,20 @@ function calculateOverUnderProbabilities(homeStats, awayStats) {
 }
 
 function calculateBTTSProbability(homeStats, awayStats) {
-  if (!homeStats || !awayStats) return { pYes: 0.5, pNo: 0.5 };
-  const homeScoring = parseFloat(homeStats?.goals?.for?.average?.home || 0);
-  const awayScoring = parseFloat(awayStats?.goals?.for?.average?.away || 0);
+  const homeScoring = parseFloat(homeStats?.goals?.for?.total?.average?.home || 0);
+  const awayScoring = parseFloat(awayStats?.goals?.for?.total?.average?.away || 0);
   const pYes = Math.min(0.95, (homeScoring + awayScoring) / 3);
   const pNo = 1 - pYes;
   return { pYes, pNo };
 }
 
 function calculateValue(prob, odd) {
-  if (!odd || odd <= 0 || !prob) return 0;
+  if (!odd || odd <= 0) return 0;
   return prob * odd - 1;
 }
 
 // ================== RENDERING ==================
-async function renderMatches(matches, odds, containerId) {
+function renderMatches(matches, odds, containerId) {
   const container = document.getElementById(containerId);
   container.innerHTML = "";
   const minValue = parseFloat(document.getElementById('filter-value').value) || 0;
@@ -122,26 +134,23 @@ async function renderMatches(matches, odds, containerId) {
     return;
   }
 
-  for (const match of matches) {
-    if (leagueFilter && match.league.id !== parseInt(leagueFilter)) continue;
+  matches.forEach(match => {
+    if (leagueFilter && match.league.id != leagueFilter) return;
 
     const o = odds.find(x => x.fixture.id === match.fixture.id);
-    if (!o || !o.bookmakers || o.bookmakers.length === 0) continue;
+    if (!o || o.bookmakers.length === 0) return;
 
-    const bets = o.bookmakers[0].bets || [];
-
-    const statsHome = await getTeamStats(match.league.id, match.teams.home.id);
-    const statsAway = await getTeamStats(match.league.id, match.teams.away.id);
-
-    const { pHome, pDraw, pAway } = calculateWinProbabilities(statsHome, statsAway);
-    const ouProbs = calculateOverUnderProbabilities(statsHome, statsAway);
-    const bttsProbs = calculateBTTSProbability(statsHome, statsAway);
-
-    const values = [];
+    const bets = o.bookmakers[0].bets;
 
     const bet1x2 = bets.find(b => b.name === "Match Winner");
     const betOU = bets.filter(b => b.name.includes("Over/Under"));
     const betBTTS = bets.find(b => b.name === "Both Teams Score");
+
+    const { pHome, pDraw, pAway } = calculateWinProbabilities(match.teams.home, match.teams.away);
+    const ouProbs = calculateOverUnderProbabilities(match.teams.home, match.teams.away);
+    const bttsProbs = calculateBTTSProbability(match.teams.home, match.teams.away);
+
+    const values = [];
 
     if (bet1x2) {
       bet1x2.values.forEach(v => {
@@ -167,7 +176,8 @@ async function renderMatches(matches, odds, containerId) {
     }
 
     const maxVal = Math.max(...values.map(v => v.val));
-    if (maxVal < minValue) continue;
+
+    if (maxVal < minValue) return;
 
     const div = document.createElement("div");
     div.className = "match-card";
@@ -197,7 +207,7 @@ async function renderMatches(matches, odds, containerId) {
       </div>
     `;
     container.appendChild(div);
-  }
+  });
 }
 
 // ================== BEST COMBO ==================
@@ -207,11 +217,10 @@ function buildBestCombo(odds) {
   const combos = [];
 
   odds.forEach(o => {
-    if (!o.bookmakers || o.bookmakers.length === 0) return;
     const bets = o.bookmakers[0].bets;
     bets.forEach(bet => {
       bet.values.forEach(v => {
-        const val = calculateValue(1 / parseFloat(v.odd), parseFloat(v.odd));
+        const val = calculateValue(1 / parseFloat(v.odd), parseFloat(v.odd)); // neutral baseline
         combos.push({ match: o.fixture, market: v.value, odd: v.odd, val });
       });
     });
@@ -239,5 +248,5 @@ function buildBestCombo(odds) {
 window.addEventListener('DOMContentLoaded', () => {
   const today = new Date().toISOString().split('T')[0];
   document.getElementById('match-date').value = today;
-  loadData();
+  loadData(false);
 });
