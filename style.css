@@ -1,48 +1,87 @@
-:root{
-  --bg:#0f1720;
-  --card:#0b1220;
-  --accent:#16a34a;
-  --muted:#9aa5b1;
-  --danger:#ef4444;
-  --glass: rgba(255,255,255,0.03);
+body {
+  font-family: Arial, sans-serif;
+  background: #121212;
+  color: #f5f5f5;
+  margin: 0;
+  padding: 0;
 }
 
-*{box-sizing:border-box}
-body{
-  margin:0;
-  font-family:Inter,system-ui,Segoe UI,Roboto,Arial;
-  background:linear-gradient(180deg,#071021 0%, #0f1720 100%);
-  color:#e6eef6;
-  padding:20px;
-  min-height:100vh;
+header {
+  background: #1e1e1e;
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
 }
-header{display:flex;flex-direction:column;gap:10px;margin-bottom:14px}
-header h1{margin:0;font-size:1.25rem}
-.controls{display:flex;gap:10px;align-items:center}
-select,button{padding:8px 10px;border-radius:8px;border:none;background:var(--glass);color:var(--muted);cursor:pointer}
-button:hover{opacity:0.9}
-.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
-.card{
-  background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-  border-radius:10px;padding:12px;border:1px solid rgba(255,255,255,0.03);
-  box-shadow:0 6px 18px rgba(2,6,23,0.6);
+
+h1 {
+  font-size: 1.5rem;
 }
-.matchTitle{font-weight:700;font-size:1rem;margin-bottom:6px}
-.meta{display:flex;gap:8px;flex-wrap:wrap;font-size:0.85rem;color:var(--muted);margin-bottom:8px}
-.oddsRow{display:flex;gap:8px;align-items:center}
-.outcome{
-  padding:6px 8px;border-radius:8px;background:rgba(255,255,255,0.02);min-width:86px;text-align:center;
+
+button {
+  background: #ff9800;
+  border: none;
+  padding: 0.5rem 1rem;
+  color: #fff;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
 }
-.prob{font-weight:700;color:#fff}
-.valuePositive{color:var(--accent);font-weight:700}
-.valueNegative{color:var(--muted)}
-.blink{animation:blink 1s linear infinite; border-left:4px solid #fbbf24;padding-left:8px}
-@keyframes blink{50%{transform:translateY(-2px)}}
-.combo{
-  background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-  border-radius:10px;padding:12px;border:1px solid rgba(255,255,255,0.03);
+
+button:hover {
+  background: #e68900;
 }
-.comboFooter{display:flex;justify-content:space-between;align-items:center;margin-top:10px}
-.debug{white-space:pre-wrap;background:#071423;padding:10px;border-radius:8px;color:#9fb3c8;border:1px solid rgba(255,255,255,0.02)}
-.footer{margin-top:20px;color:var(--muted)}
-.tag{font-size:0.8rem;padding:4px 6px;border-radius:6px;background:rgba(255,255,255,0.02);color:var(--muted)}
+
+.matches {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+}
+
+.match-card {
+  background: #1f1f1f;
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+.match-header {
+  display: flex;
+  justify-content: space-between;
+  font-weight: bold;
+}
+
+.odds-line {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 0.5rem;
+}
+
+.odds-line span {
+  font-size: 0.9rem;
+}
+
+.value-positive {
+  color: #4caf50;
+  font-weight: bold;
+}
+
+.value-negative {
+  color: #f44336;
+  font-weight: bold;
+}
+
+section h2 {
+  padding: 0.5rem 1rem;
+  background: #2a2a2a;
+  margin-top: 1rem;
+}
+
+pre {
+  background: #1f1f1f;
+  padding: 1rem;
+  border-radius: 8px;
+  white-space: pre-wrap;
+}
