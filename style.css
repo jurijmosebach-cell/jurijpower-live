@@ -1,113 +1,241 @@
-body {
-  font-family: Arial, sans-serif;
-  background: #121212;
-  color: #f5f5f5;
+/* 🌐 Grunddesign */
+* {
+  box-sizing: border-box;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   margin: 0;
   padding: 0;
 }
 
+body {
+  background: #0f172a;
+  color: #f8fafc;
+  line-height: 1.5;
+  padding: 10px;
+}
+
 header {
-  background: #1e1e1e;
-  padding: 1rem;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+header h1 {
+  font-size: 1.8rem;
+  margin-bottom: 5px;
+  color: #38bdf8;
+}
+
+header p {
+  font-size: 0.9rem;
+  color: #94a3b8;
+}
+
+/* 🧭 Filterbereich */
+.controls {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  position: sticky;
-  top: 0;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  background: #1e293b;
+  padding: 10px;
+  border-radius: 10px;
 }
 
-h1 {
-  font-size: 1.5rem;
+.controls label {
+  font-size: 0.85rem;
+  margin-right: 5px;
 }
 
-button {
-  background: #ff9800;
+.controls input,
+.controls select {
+  padding: 5px;
+  border-radius: 6px;
   border: none;
-  padding: 0.5rem 1rem;
-  color: #fff;
-  font-weight: bold;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background 0.2s ease;
+  outline: none;
 }
 
-button:hover {
-  background: #e68900;
-}
-
-.matches {
+.controls .buttons {
   display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  padding: 1rem;
+  align-items: center;
+  gap: 10px;
+}
+
+#refresh {
+  background: #38bdf8;
+  border: none;
+  padding: 6px 12px;
+  color: #0f172a;
+  font-weight: bold;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+#refresh:hover {
+  background: #0284c7;
+  color: white;
+}
+
+/* 🏟 Spielcontainer */
+.match-section {
+  margin-bottom: 25px;
+}
+
+.match-section h2 {
+  font-size: 1.2rem;
+  margin-bottom: 10px;
+  color: #facc15;
+}
+
+.match-container {
+  display: grid;
+  gap: 10px;
 }
 
 .match-card {
-  background: #1f1f1f;
-  padding: 1rem;
-  border-radius: 8px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border 0.2s ease;
-  border: 2px solid transparent;
+  background: #1e293b;
+  padding: 10px;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: 0.2s;
 }
 
 .match-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  background: #334155;
 }
 
-.match-header {
+/* ⚽ Teamnamen mit Logos */
+.match-teams {
   display: flex;
   justify-content: space-between;
-  font-weight: bold;
+  align-items: center;
 }
 
-.odds-line {
+.team {
   display: flex;
-  justify-content: space-around;
-  margin-top: 0.5rem;
-}
-
-.odds-line span {
-  font-size: 0.9rem;
-}
-
-.value-high {
-  color: #00e676; /* grün */
+  align-items: center;
+  gap: 8px;
   font-weight: bold;
+  font-size: 1rem;
 }
 
-.value-mid {
-  color: #ffeb3b; /* gelb */
+.team img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  border-radius: 50%;
+  background: #fff;
+  padding: 2px;
+}
+
+/* 🏆 Liga */
+.league-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: #94a3b8;
+}
+
+.league-info img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  border-radius: 50%;
+  background: #fff;
+}
+
+/* 🕒 Zusatzinfos */
+.match-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: #94a3b8;
+}
+
+/* 📊 Value Badges */
+.value {
   font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 6px;
 }
 
-.value-low {
-  color: #f44336; /* rot */
-  font-weight: bold;
+.value.good {
+  background: #22c55e;
+  color: white;
 }
 
-/* farbige Rahmen je nach Value */
-.card-high {
-  border-color: #00e676;
+.value.medium {
+  background: #eab308;
+  color: #0f172a;
 }
 
-.card-mid {
-  border-color: #ffeb3b;
+.value.low {
+  background: #ef4444;
+  color: white;
 }
 
-.card-low {
-  border-color: #f44336;
+/* 🧾 Kombi-Schein */
+.combo-section {
+  background: #1e293b;
+  padding: 15px;
+  border-radius: 10px;
+  margin-top: 20px;
 }
 
-section h2 {
-  padding: 0.5rem 1rem;
-  background: #2a2a2a;
-  margin-top: 1rem;
+.combo-section h2 {
+  color: #f97316;
+  margin-bottom: 10px;
 }
 
-pre {
-  background: #1f1f1f;
-  padding: 1rem;
+.combo-output {
+  background: #0f172a;
+  padding: 10px;
   border-radius: 8px;
-  white-space: pre-wrap;
+  font-family: monospace;
+  font-size: 0.85rem;
+  margin-bottom: 10px;
+  overflow-x: auto;
+}
+
+.combo-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+#copy-combo {
+  background: #38bdf8;
+  color: #0f172a;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+#copy-combo:hover {
+  background: #0284c7;
+  color: white;
+}
+
+/* 📱 Responsive Design */
+@media (max-width: 600px) {
+  .controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .team img {
+    width: 20px;
+    height: 20px;
+  }
+
+  .combo-footer {
+    flex-direction: column;
+    gap: 10px;
+  }
 }
