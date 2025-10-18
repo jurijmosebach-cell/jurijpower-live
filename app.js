@@ -16,14 +16,27 @@ document.getElementById('match-date').addEventListener('change', loadData);
 
 // ================== API FETCH ==================
 async function fetchAPI(endpoint) {
-  const response = await fetch(`${BASE_URL}${endpoint}`, {
-    method: "GET",
-    headers: {
-      "x-apisports-key": API_KEY,
-      "accept": "application/json"
-    }
-  });
-  return response.json();
+  try {
+    const response = await fetch(`${BASE_URL}${endpoint}`, {
+      method: "GET",
+      headers: {
+        "x-apisports-key": API_KEY,
+        "accept": "application/json"
+      }
+    });
+    const data = await response.json();
+    return data;
+  } catch (err) {
+    console.error("API Fehler:", err);
+    return { response: [] };
+  }
+}
+
+// ================== TEAM STATS ==================
+async function getTeamStats(leagueId, teamId) {
+  const year = new Date().getFullYear();
+  const stats = await fetchAPI(`/teams/statistics?league=${leagueId}&team=${teamId}&season=${year}`);
+  return stats?.response || null;
 }
 
 // ================== MAIN ==================
@@ -31,9 +44,9 @@ async function loadData() {
   document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
 
   const selectedDate = document.getElementById('match-date').value || new Date().toISOString().split('T')[0];
+
   const liveFixtures = await fetchAPI("/fixtures?live=all");
   const upcomingFixtures = await fetchAPI(`/fixtures?date=${selectedDate}`);
-
   const oddsLive = await fetchAPI("/odds?live=all");
   const oddsUpcoming = await fetchAPI(`/odds?date=${selectedDate}`);
 
@@ -45,15 +58,16 @@ async function loadData() {
 
 // ================== VALUE BERECHNUNG ==================
 function calculateWinProbabilities(homeStats, awayStats) {
+  if (!homeStats || !awayStats) return { pHome: 0.33, pDraw: 0.34, pAway: 0.33 };
+
   const homeForm = homeStats?.form || "";
   const awayForm = awayStats?.form || "";
-
   const homeWins = (homeForm.match(/W/g) || []).length;
   const awayWins = (awayForm.match(/W/g) || []).length;
   const games = Math.max(homeForm.length, awayForm.length, 1);
 
-  const homeGoals = parseFloat(homeStats?.goals?.for?.total?.average?.home || 0);
-  const awayGoals = parseFloat(awayStats?.goals?.for?.total?.average?.away || 0);
+  const homeGoals = parseFloat(homeStats?.goals?.for?.average?.home || 0);
+  const awayGoals = parseFloat(awayStats?.goals?.for?.average?.away || 0);
 
   const pHome = (homeWins / games) * 0.6 + (homeGoals / (homeGoals + awayGoals + 0.01)) * 0.4;
   const pAway = (awayWins / games) * 0.6 + (awayGoals / (homeGoals + awayGoals + 0.01)) * 0.4;
@@ -63,8 +77,9 @@ function calculateWinProbabilities(homeStats, awayStats) {
 }
 
 function calculateOverUnderProbabilities(homeStats, awayStats) {
-  const homeGoals = parseFloat(homeStats?.goals?.for?.total?.average?.home || 0);
-  const awayGoals = parseFloat(awayStats?.goals?.for?.total?.average?.away || 0);
+  if (!homeStats || !awayStats) return { "Over 2.5": 0.5, "Under 2.5": 0.5 };
+  const homeGoals = parseFloat(homeStats?.goals?.for?.average?.home || 0);
+  const awayGoals = parseFloat(awayStats?.goals?.for?.average?.away || 0);
   const expectedGoals = homeGoals + awayGoals;
 
   const probs = {
@@ -82,20 +97,21 @@ function calculateOverUnderProbabilities(homeStats, awayStats) {
 }
 
 function calculateBTTSProbability(homeStats, awayStats) {
-  const homeScoring = parseFloat(homeStats?.goals?.for?.total?.average?.home || 0);
-  const awayScoring = parseFloat(awayStats?.goals?.for?.total?.average?.away || 0);
+  if (!homeStats || !awayStats) return { pYes: 0.5, pNo: 0.5 };
+  const homeScoring = parseFloat(homeStats?.goals?.for?.average?.home || 0);
+  const awayScoring = parseFloat(awayStats?.goals?.for?.average?.away || 0);
   const pYes = Math.min(0.95, (homeScoring + awayScoring) / 3);
   const pNo = 1 - pYes;
   return { pYes, pNo };
 }
 
 function calculateValue(prob, odd) {
-  if (!odd || odd <= 0) return 0;
+  if (!odd || odd <= 0 || !prob) return 0;
   return prob * odd - 1;
 }
 
 // ================== RENDERING ==================
-function renderMatches(matches, odds, containerId) {
+async function renderMatches(matches, odds, containerId) {
   const container = document.getElementById(containerId);
   container.innerHTML = "";
   const minValue = parseFloat(document.getElementById('filter-value').value) || 0;
@@ -106,23 +122,26 @@ function renderMatches(matches, odds, containerId) {
     return;
   }
 
-  matches.forEach(match => {
-    if (leagueFilter && match.league.id != leagueFilter) return;
+  for (const match of matches) {
+    if (leagueFilter && match.league.id !== parseInt(leagueFilter)) continue;
 
     const o = odds.find(x => x.fixture.id === match.fixture.id);
-    if (!o || o.bookmakers.length === 0) return;
+    if (!o || !o.bookmakers || o.bookmakers.length === 0) continue;
 
-    const bets = o.bookmakers[0].bets;
+    const bets = o.bookmakers[0].bets || [];
+
+    const statsHome = await getTeamStats(match.league.id, match.teams.home.id);
+    const statsAway = await getTeamStats(match.league.id, match.teams.away.id);
+
+    const { pHome, pDraw, pAway } = calculateWinProbabilities(statsHome, statsAway);
+    const ouProbs = calculateOverUnderProbabilities(statsHome, statsAway);
+    const bttsProbs = calculateBTTSProbability(statsHome, statsAway);
+
+    const values = [];
 
     const bet1x2 = bets.find(b => b.name === "Match Winner");
     const betOU = bets.filter(b => b.name.includes("Over/Under"));
     const betBTTS = bets.find(b => b.name === "Both Teams Score");
-
-    const { pHome, pDraw, pAway } = calculateWinProbabilities(match.teams.home, match.teams.away);
-    const ouProbs = calculateOverUnderProbabilities(match.teams.home, match.teams.away);
-    const bttsProbs = calculateBTTSProbability(match.teams.home, match.teams.away);
-
-    const values = [];
 
     if (bet1x2) {
       bet1x2.values.forEach(v => {
@@ -148,9 +167,7 @@ function renderMatches(matches, odds, containerId) {
     }
 
     const maxVal = Math.max(...values.map(v => v.val));
-
-    // Filter nach Value
-    if (maxVal < minValue) return;
+    if (maxVal < minValue) continue;
 
     const div = document.createElement("div");
     div.className = "match-card";
@@ -180,7 +197,7 @@ function renderMatches(matches, odds, containerId) {
       </div>
     `;
     container.appendChild(div);
-  });
+  }
 }
 
 // ================== BEST COMBO ==================
@@ -190,10 +207,11 @@ function buildBestCombo(odds) {
   const combos = [];
 
   odds.forEach(o => {
+    if (!o.bookmakers || o.bookmakers.length === 0) return;
     const bets = o.bookmakers[0].bets;
     bets.forEach(bet => {
       bet.values.forEach(v => {
-        const val = calculateValue(1 / parseFloat(v.odd), parseFloat(v.odd)); // neutral baseline
+        const val = calculateValue(1 / parseFloat(v.odd), parseFloat(v.odd));
         combos.push({ match: o.fixture, market: v.value, odd: v.odd, val });
       });
     });
