@@ -1,158 +1,136 @@
-// === ⚽ JurijPower Live Tool – SoccerData API Version ===
-const API_KEY = "4edc0535a5304abcfd3999fad3e6293d0b02e1a0";
-const BASE_URL = "https://api.soccerdataapi.com";
+const API_KEY = "c6ad1210c71b17cca24284ab8a9873b4";
+const BASE_URL = "https://v3.football.api-sports.io";
 
-// === Favoritenligen (IDs nach Bedarf) ===
-const FAVORITE_LEAGUES = [78, 79, 39, 135, 140, 61];
-
-// === HTML Elemente ===
-const liveContainer = document.getElementById("live-matches");
-const upcomingContainer = document.getElementById("upcoming-matches");
-const lastUpdate = document.getElementById("lastUpdate");
-const refreshButton = document.getElementById("refreshButton");
-const filterSelect = document.getElementById("filterSelect");
-const totalOddsSpan = document.getElementById("total-odds");
-const comboValueSpan = document.getElementById("combo-value");
-const copyComboBtn = document.getElementById("copy-combo");
-
-// === Browser Notifications aktivieren ===
-if ("Notification" in window && Notification.permission !== "granted") {
-  Notification.requestPermission();
-}
-
-// === Hilfsfunktionen ===
-function calcGoalProbability(match) {
-  const homeGoals = match.home_score;
-  const awayGoals = match.away_score;
-  const totalGoals = homeGoals + awayGoals;
-  const minute = match.minute || 0;
-  return Math.min(100, Math.round((totalGoals * 20) + (minute / 2)));
-}
-
-function calcValue(prob, odds) {
-  const fairProb = odds > 0 ? (1 / odds) * 100 : 0;
-  return prob - fairProb;
-}
-
-function sendNotification(teamA, teamB, prob) {
-  if ("Notification" in window && Notification.permission === "granted") {
-    new Notification("🔥 Hohe Torwahrscheinlichkeit!", {
-      body: `${teamA} vs ${teamB}\nTorwahrscheinlichkeit: ${prob}%`,
-      icon: "https://cdn-icons-png.flaticon.com/512/51/51767.png"
-    });
-  }
-}
-
-// === Datenabruf ===
-async function fetchMatches(type = "live") {
-  const url = `${BASE_URL}/${type === "live" ? "livescores" : "fixtures"}/?auth_token=${API_KEY}`;
-  const res = await fetch(url, {
-    headers: { "Accept-Encoding": "gzip" }
+async function fetchAPI(endpoint) {
+  const response = await fetch(`${BASE_URL}${endpoint}`, {
+    headers: { "x-apisports-key": API_KEY }
   });
-  const data = await res.json();
-  return data.data || [];
+  return response.json();
 }
 
-async function fetchOdds(fixtureId) {
-  const url = `${BASE_URL}/odds/?fixture_id=${fixtureId}&auth_token=${API_KEY}`;
-  const res = await fetch(url, {
-    headers: { "Accept-Encoding": "gzip" }
-  });
-  const data = await res.json();
-  if (data.data && data.data.length > 0) {
-    return data.data[0].odds.home_win; // Beispiel: 1X2 Home-Quote
-  }
-  return 1.0;
+function formatDateTime(dateStr) {
+  const date = new Date(dateStr);
+  return date.toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" });
 }
 
-// === Darstellung ===
-async function displayMatches(container, matches, isLive = false) {
+async function loadLiveGames() {
+  const data = await fetchAPI("/fixtures?live=all");
+  const container = document.getElementById("liveGames");
   container.innerHTML = "";
 
-  if (matches.length === 0) {
-    container.innerHTML = `<p class="no-matches">❌ Keine Spiele aktuell.</p>`;
+  if (!data.response || data.response.length === 0) {
+    container.innerHTML = "<p>Keine Live Spiele 📭</p>";
     return;
   }
 
-  for (const match of matches) {
-    const odds = await fetchOdds(match.id);
-    const prob = calcGoalProbability(match);
-    const value = calcValue(prob, odds);
-    const isHigh = prob >= 70;
-
-    const div = document.createElement("div");
-    div.classList.add("match-card");
-    if (isHigh && isLive) div.classList.add("blink");
-
-    div.innerHTML = `
-      <div><strong>${match.home_team}</strong> vs <strong>${match.away_team}</strong></div>
-      <div>⏱️ ${match.minute || match.starting_at.slice(11, 16)}</div>
-      <div>💰 Quote: ${odds.toFixed(2)}</div>
-      <div>📊 Tor-Wahrsch.: <span class="high-prob">${prob}%</span></div>
-      <div>🧮 Value: ${value.toFixed(2)}%</div>
+  data.response.forEach(game => {
+    const card = document.createElement("div");
+    card.className = "game-card";
+    card.innerHTML = `
+      <strong>${game.teams.home.name}</strong> vs <strong>${game.teams.away.name}</strong><br>
+      🕒 ${formatDateTime(game.fixture.date)}
     `;
-    container.appendChild(div);
-
-    if (isHigh && isLive) {
-      sendNotification(match.home_team, match.away_team, prob);
-    }
-  }
+    container.appendChild(card);
+  });
 }
 
-// === Kombi berechnen ===
-async function calculateBestCombo(matches) {
-  // Wähle Top 3 Spiele mit höchstem Value
-  const withValues = await Promise.all(
-    matches.map(async m => {
-      const odds = await fetchOdds(m.id);
-      const prob = calcGoalProbability(m);
-      const val = calcValue(prob, odds);
-      return { match: m, odds, value: val };
-    })
-  );
+async function loadUpcomingGames() {
+  const now = new Date();
+  const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+  const from = now.toISOString().split("T")[0];
+  const to = tomorrow.toISOString().split("T")[0];
 
-  const top = withValues.sort((a, b) => b.value - a.value).slice(0, 3);
+  const data = await fetchAPI(`/fixtures?from=${from}&to=${to}`);
+  const container = document.getElementById("upcomingGames");
+  container.innerHTML = "";
 
-  const totalOdds = top.reduce((acc, x) => acc * x.odds, 1);
-  const avgValue = top.reduce((acc, x) => acc + x.value, 0) / top.length;
+  if (!data.response || data.response.length === 0) {
+    container.innerHTML = "<p>Keine Spiele in den nächsten 24h 📭</p>";
+    return;
+  }
 
-  totalOddsSpan.textContent = totalOdds.toFixed(2);
-  comboValueSpan.textContent = avgValue.toFixed(2);
+  data.response.forEach(game => {
+    const card = document.createElement("div");
+    card.className = "game-card";
+    card.innerHTML = `
+      <strong>${game.teams.home.name}</strong> vs <strong>${game.teams.away.name}</strong><br>
+      🕒 ${formatDateTime(game.fixture.date)}
+    `;
+    container.appendChild(card);
+  });
 
-  copyComboBtn.onclick = () => {
-    const text = top.map(x => `${x.match.home_team} vs ${x.match.away_team} (${x.odds.toFixed(2)})`).join("\n");
+  const odds = await loadOddsForGames(data.response);
+  generateBestCombo(odds);
+}
+
+async function loadOddsForGames(games) {
+  const gameData = [];
+  for (const g of games) {
+    const oddsData = await fetchAPI(`/odds?fixture=${g.fixture.id}`);
+    if (oddsData.response && oddsData.response.length > 0) {
+      const bookmaker = oddsData.response[0].bookmakers[0];
+      const bets = bookmaker.bets.find(b => b.name === "Match Winner");
+
+      if (bets) {
+        const homeOdd = parseFloat(bets.values.find(v => v.value === "Home")?.odd || 1);
+        const drawOdd = parseFloat(bets.values.find(v => v.value === "Draw")?.odd || 1);
+        const awayOdd = parseFloat(bets.values.find(v => v.value === "Away")?.odd || 1);
+
+        gameData.push({
+          match: `${g.teams.home.name} vs ${g.teams.away.name}`,
+          fixtureId: g.fixture.id,
+          odds: {
+            home: homeOdd,
+            draw: drawOdd,
+            away: awayOdd
+          }
+        });
+      }
+    }
+  }
+  return gameData;
+}
+
+function calculateValue(odd) {
+  // Dummy Value Formel → später kannst du hier deine eigene Strategie einbauen
+  return odd * 0.95; // z.B. 5% Margin abgezogen
+}
+
+function generateBestCombo(games) {
+  let allBets = [];
+  games.forEach(g => {
+    allBets.push({ match: g.match, type: "Home", odd: g.odds.home, value: calculateValue(g.odds.home) });
+    allBets.push({ match: g.match, type: "Draw", odd: g.odds.draw, value: calculateValue(g.odds.draw) });
+    allBets.push({ match: g.match, type: "Away", odd: g.odds.away, value: calculateValue(g.odds.away) });
+  });
+
+  allBets.sort((a, b) => b.value - a.value);
+  const bestCombo = allBets.slice(0, 3);
+
+  const totalOdds = bestCombo.reduce((acc, cur) => acc * cur.odd, 1).toFixed(2);
+  const totalValue = bestCombo.reduce((acc, cur) => acc * cur.value, 1).toFixed(2);
+
+  document.getElementById("totalOdds").innerText = `Gesamtquote: ${totalOdds}`;
+  document.getElementById("totalValue").innerText = `Kombi-Value: ${totalValue}`;
+
+  document.getElementById("copyCombo").onclick = () => {
+    const text = bestCombo.map(b => `${b.match} - ${b.type} (${b.odd})`).join("\n");
     navigator.clipboard.writeText(text);
+    alert("Kombi kopiert ✅");
   };
 }
 
-// === Aktualisieren ===
-async function updateData() {
-  const filter = filterSelect.value;
-
-  const liveMatches = await fetchMatches("live");
-  const upcomingMatches = await fetchMatches("fixtures");
-
-  const filteredLive = filter === "favorites"
-    ? liveMatches.filter(m => FAVORITE_LEAGUES.includes(m.league_id))
-    : liveMatches;
-
-  const filteredUpcoming = filter === "favorites"
-    ? upcomingMatches.filter(m => FAVORITE_LEAGUES.includes(m.league_id))
-    : upcomingMatches;
-
-  await displayMatches(liveContainer, filteredLive, true);
-  await displayMatches(upcomingContainer, filteredUpcoming, false);
-
-  // Kombi nur aus kommenden Spielen
-  await calculateBestCombo(filteredUpcoming);
-
-  lastUpdate.textContent = new Date().toLocaleTimeString();
+function updateTime() {
+  document.getElementById("lastUpdate").innerText =
+    "Letztes Update: " + new Date().toLocaleString("de-DE");
 }
 
-// === Events ===
-refreshButton.addEventListener("click", updateData);
-filterSelect.addEventListener("change", updateData);
+document.getElementById("refreshBtn").addEventListener("click", () => {
+  loadLiveGames();
+  loadUpcomingGames();
+  updateTime();
+});
 
-// === Initial ===
-updateData();
-setInterval(updateData, 60000);
+loadLiveGames();
+loadUpcomingGames();
+updateTime();
