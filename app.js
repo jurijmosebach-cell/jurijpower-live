@@ -1,10 +1,15 @@
 // ================== CONFIG ==================
 const API_KEY = "c6ad1210c71b17cca24284ab8a9873b4";
 const BASE_URL = "https://v3.football.api-sports.io";
-const AUTO_REFRESH_INTERVAL = 60000; // 60 Sek.
-
 let comboText = "";
-let autoRefreshTimer = null;
+
+// ================== LOADER ==================
+function showLoader() {
+  document.getElementById('loader').style.display = 'flex';
+}
+function hideLoader() {
+  document.getElementById('loader').style.display = 'none';
+}
 
 // ================== EVENT LISTENERS ==================
 document.getElementById('refresh').addEventListener('click', loadData);
@@ -12,19 +17,11 @@ document.getElementById('copy-combo').addEventListener('click', () => {
   navigator.clipboard.writeText(comboText);
   alert("Kombi kopiert ✅");
 });
-
 document.getElementById('filter-value').addEventListener('change', loadData);
 document.getElementById('league-filter').addEventListener('change', loadData);
 document.getElementById('match-date').addEventListener('change', loadData);
 document.getElementById('time-filter').addEventListener('change', loadData);
-
-document.getElementById('fav-league').addEventListener('click', () => {
-  const leagueId = document.getElementById('league-filter').value;
-  if (leagueId) {
-    localStorage.setItem('favLeague', leagueId);
-    alert('Favoriten-Liga gespeichert ✅');
-  }
-});
+document.getElementById('fav-league').addEventListener('click', saveFavLeague);
 
 // ================== API FETCH ==================
 async function fetchAPI(endpoint) {
@@ -38,21 +35,35 @@ async function fetchAPI(endpoint) {
   return response.json();
 }
 
+// ================== FAVORITEN LIGA ==================
+function saveFavLeague() {
+  const leagueId = document.getElementById('league-filter').value;
+  if (leagueId) {
+    localStorage.setItem('favLeague', leagueId);
+    alert("⭐ Favoriten-Liga gespeichert!");
+  }
+}
+function loadFavLeague() {
+  const fav = localStorage.getItem('favLeague');
+  if (fav) document.getElementById('league-filter').value = fav;
+}
+
 // ================== MAIN ==================
 async function loadData() {
+  showLoader();
   document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
-  const selectedDate = document.getElementById('match-date').value || new Date().toISOString().split('T')[0];
 
+  const selectedDate = document.getElementById('match-date').value || new Date().toISOString().split('T')[0];
   const liveFixtures = await fetchAPI("/fixtures?live=all");
   const upcomingFixtures = await fetchAPI(`/fixtures?date=${selectedDate}`);
-
   const oddsLive = await fetchAPI("/odds?live=all");
   const oddsUpcoming = await fetchAPI(`/odds?date=${selectedDate}`);
 
   renderMatches(liveFixtures.response, oddsLive.response, "live-matches");
   renderMatches(upcomingFixtures.response, oddsUpcoming.response, "upcoming-matches");
-
   buildBestCombo([...oddsLive.response, ...oddsUpcoming.response]);
+
+  hideLoader();
 }
 
 // ================== VALUE BERECHNUNG ==================
@@ -110,7 +121,6 @@ function calculateValue(prob, odd) {
 function renderMatches(matches, odds, containerId) {
   const container = document.getElementById(containerId);
   container.innerHTML = "";
-
   const minValue = parseFloat(document.getElementById('filter-value').value) || 0;
   const leagueFilter = document.getElementById('league-filter').value;
   const timeFilter = document.getElementById('time-filter').value;
@@ -121,21 +131,18 @@ function renderMatches(matches, odds, containerId) {
   }
 
   matches.forEach(match => {
-    // Filter: Liga
     if (leagueFilter && match.league.id != leagueFilter) return;
 
-    // Filter: Uhrzeit
+    // Zeitfilter
     if (timeFilter) {
-      const matchTime = new Date(match.fixture.date).getHours();
-      const filterHour = parseInt(timeFilter);
-      if (matchTime < filterHour) return;
+      const kickoff = new Date(match.fixture.date);
+      if (kickoff.getHours() < parseInt(timeFilter)) return;
     }
 
     const o = odds.find(x => x.fixture.id === match.fixture.id);
     if (!o || o.bookmakers.length === 0) return;
 
     const bets = o.bookmakers[0].bets;
-
     const bet1x2 = bets.find(b => b.name === "Match Winner");
     const betOU = bets.filter(b => b.name.includes("Over/Under"));
     const betBTTS = bets.find(b => b.name === "Both Teams Score");
@@ -174,9 +181,6 @@ function renderMatches(matches, odds, containerId) {
 
     const div = document.createElement("div");
     div.className = "match-card";
-    if (maxVal >= 0.1) div.classList.add('card-high');
-    else if (maxVal >= 0) div.classList.add('card-mid');
-    else div.classList.add('card-low');
 
     div.innerHTML = `
       <div class="match-header">
@@ -197,7 +201,9 @@ function renderMatches(matches, odds, containerId) {
           </div>
         `).join('')}
       </div>
+      <div class="value-bar ${maxVal>=0.1?'high':maxVal>=0?'mid':'low'}" style="width:${Math.min(100,(maxVal+1)*50)}%"></div>
     `;
+
     container.appendChild(div);
   });
 }
@@ -205,8 +211,8 @@ function renderMatches(matches, odds, containerId) {
 // ================== BEST COMBO ==================
 function buildBestCombo(odds) {
   if (!odds || odds.length === 0) return;
-
   const combos = [];
+
   odds.forEach(o => {
     const bets = o.bookmakers[0].bets;
     bets.forEach(bet => {
@@ -235,20 +241,11 @@ function buildBestCombo(odds) {
   document.getElementById('total-value').textContent = (totalVal*100).toFixed(1) + "%";
 }
 
-// ================== AUTO REFRESH ==================
-function startAutoRefresh() {
-  if (autoRefreshTimer) clearInterval(autoRefreshTimer);
-  autoRefreshTimer = setInterval(loadData, AUTO_REFRESH_INTERVAL);
-}
-
 // ================== INITIAL LOAD ==================
 window.addEventListener('DOMContentLoaded', () => {
   const today = new Date().toISOString().split('T')[0];
   document.getElementById('match-date').value = today;
-
-  const favLeague = localStorage.getItem('favLeague');
-  if (favLeague) document.getElementById('league-filter').value = favLeague;
-
+  loadFavLeague();
   loadData();
-  startAutoRefresh();
+  setInterval(loadData, 60000); // ⏱️ Auto-Refresh alle 60 Sek.
 });
