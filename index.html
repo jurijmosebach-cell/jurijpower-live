@@ -1,56 +1,36 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>JurijPower — Value Predictor</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Jurij Power ⚽ Value Tool</title>
+  <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
   <header>
-    <h1>⚽ JurijPower — Statistische Value-Prognose</h1>
-    <div class="controls">
-      <select id="filterSelect">
-        <option value="all">Alle Ligen</option>
-        <option value="favorites">Favoriten</option>
-      </select>
-      <button id="refreshBtn">🔄 Aktualisieren</button>
-      <span id="lastUpdate">Letztes Update: -</span>
-    </div>
+    <h1>⚽ JurijPower Value Tool</h1>
+    <button id="refresh">🔄 Aktualisieren</button>
+    <span>Letztes Update: <span id="last-update"></span></span>
   </header>
 
   <main>
     <section>
       <h2>📡 Live Spiele</h2>
-      <div id="liveContainer" class="cards"></div>
+      <div id="live-matches" class="matches"></div>
     </section>
 
     <section>
-      <h2>🗓 Pre-Match (heute)</h2>
-      <div id="preContainer" class="cards"></div>
+      <h2>🗓️ Pre-Match Spiele</h2>
+      <div id="upcoming-matches" class="matches"></div>
     </section>
 
     <section>
-      <h2>💎 Automatische Kombi (Top Value)</h2>
-      <div id="comboBox" class="combo">
-        <div id="comboList"></div>
-        <div class="comboFooter">
-          <div>Gesamtquote: <span id="comboOdds">-</span></div>
-          <div>Kombi-Value: <span id="comboValue">-</span></div>
-          <button id="copyCombo">📋 Kombi kopieren</button>
-        </div>
-      </div>
-    </section>
-
-    <section>
-      <h2>🛠️ Debug / API Status</h2>
-      <pre id="debug" class="debug"></pre>
+      <h2>🔥 Beste Kombi (Top Value)</h2>
+      <pre id="combo-output"></pre>
+      <p>Gesamtquote: <span id="total-odds">1.00</span> | Kombi-Value: <span id="total-value">0%</span></p>
+      <button id="copy-combo">📋 Kombi kopieren</button>
     </section>
   </main>
-
-  <footer>
-    <small>Made with ❤️ by JurijPower — Data: API-Football</small>
-  </footer>
 
   <script src="app.js"></script>
 </body>
