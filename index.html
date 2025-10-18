@@ -2,73 +2,74 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>⚽ Value Bet Scanner</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Value Betting Dashboard ⚽</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <header>
-    <h1>⚽ Value Bet Scanner</h1>
-    <p>Automatisierte Analyse für Live & Upcoming Spiele</p>
+    <h1>⚽ Value Betting Dashboard</h1>
+    <p>Live & Tages-Spiele mit Value-Berechnung</p>
+    <p>Letztes Update: <span id="last-update">–</span></p>
   </header>
 
-  <!-- ================= Filter & Steuerung ================= -->
-  <section class="controls">
+  <!-- Filter & Steuerung -->
+  <div class="controls">
     <div>
-      <label for="match-date">📅 Datum:</label>
-      <input type="date" id="match-date">
+      <label for="match-date">Datum:</label>
+      <input type="date" id="match-date" />
     </div>
+
     <div>
-      <label for="filter-value">📊 Min. Value:</label>
+      <label for="filter-value">Min. Value:</label>
       <select id="filter-value">
         <option value="0">Alle</option>
-        <option value="0.05">≥ 5%</option>
-        <option value="0.1">≥ 10%</option>
-        <option value="0.2">≥ 20%</option>
+        <option value="0.05">ab 5%</option>
+        <option value="0.1">ab 10%</option>
+        <option value="0.2">ab 20%</option>
       </select>
     </div>
+
     <div>
-      <label for="league-filter">🏆 Liga:</label>
+      <label for="league-filter">Liga:</label>
       <select id="league-filter">
-        <option value="">Alle</option>
-        <!-- Optional: Du kannst hier feste Ligen eintragen -->
-        <!-- <option value="39">Premier League</option> -->
+        <option value="">Alle Ligen</option>
       </select>
     </div>
+
     <div class="buttons">
       <button id="refresh">🔄 Aktualisieren</button>
-      <span>🕒 Letztes Update: <span id="last-update">-</span></span>
+    </div>
+  </div>
+
+  <!-- Live Spiele -->
+  <section class="match-section">
+    <h2>📡 Live-Spiele</h2>
+    <div id="live-matches" class="match-container">
+      <p>Lade Live-Daten...</p>
     </div>
   </section>
 
-  <!-- ================= Live Spiele ================= -->
+  <!-- Tages Spiele -->
   <section class="match-section">
-    <h2>📡 Live Spiele</h2>
-    <div id="live-matches" class="match-container"></div>
+    <h2>🗓️ Tages-Spiele</h2>
+    <div id="upcoming-matches" class="match-container">
+      <p>Lade Spiele...</p>
+    </div>
   </section>
 
-  <!-- ================= Kommende Spiele ================= -->
-  <section class="match-section">
-    <h2>📅 Kommende Spiele</h2>
-    <div id="upcoming-matches" class="match-container"></div>
-  </section>
-
-  <!-- ================= Kombi Schein ================= -->
+  <!-- Kombi Tipps -->
   <section class="combo-section">
-    <h2>🔥 Bester Kombi-Schein</h2>
-    <div class="combo-output">
-      <pre id="combo-output">Noch kein Kombi-Schein berechnet</pre>
-    </div>
+    <h2>📋 Bester Kombi-Schein</h2>
+    <div class="combo-output" id="combo-output">–</div>
     <div class="combo-footer">
-      <p>Gesamtquote: <strong id="total-odds">0.00</strong></p>
-      <p>Gesamt-Value: <strong id="total-value">0%</strong></p>
-      <button id="copy-combo">📋 Kopieren</button>
+      <div>
+        Gesamtquote: <strong id="total-odds">–</strong> |
+        Value: <strong id="total-value">–</strong>
+      </div>
+      <button id="copy-combo">📎 Kopieren</button>
     </div>
   </section>
-
-  <footer>
-    <p>Made with ❤️ für Sportwetten-Analysen • Cache aktiv für weniger API-Verbrauch ⚡</p>
-  </footer>
 
   <script src="app.js"></script>
 </body>
