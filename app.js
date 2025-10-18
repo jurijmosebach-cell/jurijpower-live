@@ -1,9 +1,10 @@
 // ================== CONFIG ==================
-const API_KEY = "c6ad1210c71b17cca24284ab8a9873b4"; // ⬅️ hier deinen eigenen Key eintragen!
+const API_KEY = "c6ad1210c71b17cca24284ab8a9873b4"; // ⬅️ Dein Key
 const BASE_URL = "https://v3.football.api-sports.io";
+const CACHE_DURATION = 60 * 1000; // 1 Minute
 
 let comboText = "";
-const CACHE_DURATION = 60 * 1000; // 1 Minute Caching
+let leagueList = new Map(); // ⚽ wird automatisch befüllt
 
 // ================== EVENT LISTENERS ==================
 document.getElementById('refresh').addEventListener('click', loadData);
@@ -49,6 +50,9 @@ async function loadData() {
 
   const oddsLive = await fetchWithCache("/odds?live=all");
   const oddsUpcoming = await fetchWithCache(`/odds?date=${selectedDate}`);
+
+  // 🏆 Dropdown automatisch füllen
+  buildLeagueFilter([...liveFixtures, ...upcomingFixtures]);
 
   renderMatches(liveFixtures, oddsLive, "live-matches");
   renderMatches(upcomingFixtures, oddsUpcoming, "upcoming-matches");
@@ -113,7 +117,7 @@ function renderMatches(matches, odds, containerId) {
     const maxVal = Math.max(...values.map(v => v.val));
     if (maxVal < minValue) return;
 
-    // 🏟️ Team Logos + 🏆 Liga Logo
+    // 🏟️ Logos + Infos
     const div = document.createElement("div");
     div.className = "match-card";
 
@@ -156,7 +160,28 @@ function renderMatches(matches, odds, containerId) {
   });
 }
 
-// ================== BEST COMBO ==================
+// ================== 🏆 LIGEN-FILTER ==================
+function buildLeagueFilter(matches) {
+  const select = document.getElementById('league-filter');
+  const existing = new Set();
+  matches.forEach(m => {
+    if (!existing.has(m.league.id)) {
+      existing.add(m.league.id);
+      leagueList.set(m.league.id, m.league.name);
+    }
+  });
+
+  // Clear & Neu befüllen
+  select.innerHTML = `<option value="">Alle Ligen</option>`;
+  leagueList.forEach((name, id) => {
+    const opt = document.createElement("option");
+    opt.value = id;
+    opt.textContent = name;
+    select.appendChild(opt);
+  });
+}
+
+// ================== KOMBI ==================
 function buildBestCombo(odds) {
   if (!odds || odds.length === 0) return;
 
