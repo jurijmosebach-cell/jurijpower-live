@@ -55,14 +55,8 @@ function calculateOverUnderProbabilities(homeStats, awayStats) {
 }
 
 function calculateValue(prob, odd) {
-  if (!odd || odd <= 0) return -1;
+  if (!odd || odd <= 0) return 0;
   return prob * odd - 1;
-}
-
-function valueColor(value) {
-  if (value >= 0.05) return "value-high";       // grün
-  if (value >= -0.05) return "value-mid";       // gelb
-  return "value-low";                          // rot
 }
 
 function renderMatches(matches, odds, containerId) {
@@ -72,8 +66,6 @@ function renderMatches(matches, odds, containerId) {
     container.innerHTML = "<p>Keine Spiele gefunden</p>";
     return;
   }
-
-  let allMatches = [];
 
   matches.forEach(match => {
     const o = odds.find(x => x.fixture.id === match.fixture.id);
@@ -99,35 +91,34 @@ function renderMatches(matches, odds, containerId) {
     const valOver = calculateValue(pOver, overOdd);
     const valUnder = calculateValue(pUnder, underOdd);
 
-    const bestValue = Math.max(valHome, valDraw, valAway, valOver, valUnder);
+    // max Value für Farbkodierung
+    const maxVal = Math.max(valHome, valDraw, valAway, valOver, valUnder);
 
-    allMatches.push({
-      match,
-      odds: { homeOdd, drawOdd, awayOdd, overOdd, underOdd },
-      values: { valHome, valDraw, valAway, valOver, valUnder },
-      bestValue
-    });
-  });
-
-  // Sortieren nach höchstem Value
-  allMatches.sort((a, b) => b.bestValue - a.bestValue);
-
-  allMatches.forEach(({ match, odds, values }) => {
     const div = document.createElement("div");
     div.className = "match-card";
+
+    // Farbliche Einordnung
+    if (maxVal >= 0.1) {
+      div.classList.add('card-high');
+    } else if (maxVal >= 0) {
+      div.classList.add('card-mid');
+    } else {
+      div.classList.add('card-low');
+    }
+
     div.innerHTML = `
       <div class="match-header">
         <span>${match.teams.home.name} vs ${match.teams.away.name}</span>
         <span>${match.fixture.status.short}</span>
       </div>
       <div class="odds-line">
-        <span>1: ${odds.homeOdd || "-"} | <span class="${valueColor(values.valHome)}">${(values.valHome*100).toFixed(1)}%</span></span>
-        <span>X: ${odds.drawOdd || "-"} | <span class="${valueColor(values.valDraw)}">${(values.valDraw*100).toFixed(1)}%</span></span>
-        <span>2: ${odds.awayOdd || "-"} | <span class="${valueColor(values.valAway)}">${(values.valAway*100).toFixed(1)}%</span></span>
+        <span>1: ${homeOdd || "-"} | <span class="${valHome>=0.1?'value-high':valHome>=0?'value-mid':'value-low'}">${(valHome*100).toFixed(1)}%</span></span>
+        <span>X: ${drawOdd || "-"} | <span class="${valDraw>=0.1?'value-high':valDraw>=0?'value-mid':'value-low'}">${(valDraw*100).toFixed(1)}%</span></span>
+        <span>2: ${awayOdd || "-"} | <span class="${valAway>=0.1?'value-high':valAway>=0?'value-mid':'value-low'}">${(valAway*100).toFixed(1)}%</span></span>
       </div>
       <div class="odds-line">
-        <span>Over 2.5: ${odds.overOdd || "-"} | <span class="${valueColor(values.valOver)}">${(values.valOver*100).toFixed(1)}%</span></span>
-        <span>Under 2.5: ${odds.underOdd || "-"} | <span class="${valueColor(values.valUnder)}">${(values.valUnder*100).toFixed(1)}%</span></span>
+        <span>Over 2.5: ${overOdd || "-"} | <span class="${valOver>=0.1?'value-high':valOver>=0?'value-mid':'value-low'}">${(valOver*100).toFixed(1)}%</span></span>
+        <span>Under 2.5: ${underOdd || "-"} | <span class="${valUnder>=0.1?'value-high':valUnder>=0?'value-mid':'value-low'}">${(valUnder*100).toFixed(1)}%</span></span>
       </div>
     `;
     container.appendChild(div);
