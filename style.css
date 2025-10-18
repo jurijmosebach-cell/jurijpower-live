@@ -1,247 +1,191 @@
-/* 🌐 Grundlayout */
-* {
-  box-sizing: border-box;
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+/* 🌙 Modern Dark Mode Standard Design */
+
+:root {
+  --bg-dark: #0f172a;
+  --bg-light: #f9fafb;
+  --text-dark: #f1f5f9;
+  --text-light: #0f172a;
+  --primary: #3b82f6;
+  --accent: #06b6d4;
+  --success: #16a34a;
+  --warning: #facc15;
+  --danger: #dc2626;
+  --card-bg-dark: #1e293b;
+  --card-bg-light: #ffffff;
+  --border-dark: #334155;
+  --border-light: #e2e8f0;
+}
+
+/* 🌙 Default Dark Mode */
+body {
+  background-color: var(--bg-dark);
+  color: var(--text-dark);
+  font-family: "Inter", Arial, sans-serif;
   margin: 0;
   padding: 0;
+  transition: all 0.3s ease;
 }
 
-body {
-  background: #0f172a;
-  color: #f8fafc;
-  line-height: 1.5;
-  padding: 10px;
+.light-mode {
+  background-color: var(--bg-light);
+  color: var(--text-light);
 }
 
+.container {
+  max-width: 1000px;
+  margin: auto;
+  padding: 20px;
+}
+
+/* 🧭 Header */
 header {
   text-align: center;
+  padding: 10px;
   margin-bottom: 20px;
 }
 
 header h1 {
   font-size: 1.8rem;
-  color: #38bdf8;
-  margin-bottom: 5px;
+  font-weight: 700;
+  color: var(--primary);
 }
 
-header p {
-  font-size: 0.9rem;
-  color: #94a3b8;
-}
-
-/* 🎛️ Filterbereich */
-.controls {
+/* 🧭 Filter-Bereich */
+.filters {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
   gap: 10px;
-  margin-bottom: 20px;
-  background: #1e293b;
-  padding: 10px;
-  border-radius: 10px;
+  background-color: var(--card-bg-dark);
+  padding: 15px;
+  border-radius: 12px;
+  border: 1px solid var(--border-dark);
 }
 
-.controls label {
-  font-size: 0.85rem;
-  margin-right: 5px;
+.light-mode .filters {
+  background-color: var(--card-bg-light);
+  border: 1px solid var(--border-light);
 }
 
-.controls input,
-.controls select {
-  padding: 5px;
-  border-radius: 6px;
-  border: none;
-  outline: none;
+select, input[type="date"], button {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border-dark);
+  background: var(--bg-dark);
+  color: var(--text-dark);
+  font-size: 0.95rem;
 }
 
-.controls .buttons {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+.light-mode select,
+.light-mode input[type="date"],
+.light-mode button {
+  background: var(--bg-light);
+  color: var(--text-light);
+  border: 1px solid var(--border-light);
 }
 
-#refresh {
-  background: #38bdf8;
-  border: none;
-  padding: 6px 12px;
-  color: #0f172a;
-  font-weight: bold;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-#refresh:hover {
-  background: #0284c7;
+button {
+  background-color: var(--primary);
   color: white;
+  cursor: pointer;
+  transition: 0.3s;
 }
 
-/* 🏟 Spielkarten */
-.match-section {
-  margin-bottom: 25px;
+button:hover {
+  background-color: var(--accent);
 }
 
-.match-section h2 {
-  font-size: 1.2rem;
-  margin-bottom: 10px;
-  color: #facc15;
-}
-
-.match-container {
-  display: grid;
-  gap: 10px;
-}
-
+/* 🏟️ Spielkarten */
 .match-card {
-  background: #1e293b;
-  padding: 12px;
-  border-radius: 10px;
+  background-color: var(--card-bg-dark);
+  margin-top: 15px;
+  padding: 15px;
+  border-radius: 12px;
+  border: 1px solid var(--border-dark);
   display: flex;
-  flex-direction: column;
-  gap: 10px;
+  justify-content: space-between;
+  align-items: center;
   transition: 0.2s;
 }
 
 .match-card:hover {
-  background: #334155;
+  transform: scale(1.02);
 }
 
-/* ⚽ Teams */
+.light-mode .match-card {
+  background-color: var(--card-bg-light);
+  border: 1px solid var(--border-light);
+}
+
 .match-teams {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.team {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: bold;
+  font-weight: 600;
   font-size: 1rem;
 }
 
-.team img {
-  width: 28px;
-  height: 28px;
-  object-fit: contain;
-  border-radius: 50%;
-  background: #fff;
-  padding: 2px;
-}
-
-/* 🏆 Liga */
-.league-info {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.85rem;
-  color: #94a3b8;
-}
-
-.league-info img {
-  width: 20px;
-  height: 20px;
-  object-fit: contain;
-  border-radius: 50%;
-  background: #fff;
-}
-
-/* 🕒 Infos */
 .match-info {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.85rem;
-  color: #94a3b8;
+  text-align: right;
 }
 
-/* 📊 Value */
-.odds-item {
-  display: flex;
-  justify-content: space-between;
-  padding: 4px 0;
+.match-time {
+  font-size: 0.9rem;
+  opacity: 0.8;
 }
 
+/* 📊 Value Anzeige */
 .value {
-  font-weight: bold;
-  padding: 2px 6px;
-  border-radius: 6px;
-}
-
-.value.good {
-  background: #22c55e;
-  color: white;
-}
-
-.value.medium {
-  background: #eab308;
-  color: #0f172a;
-}
-
-.value.low {
-  background: #ef4444;
-  color: white;
-}
-
-/* 🧾 Kombi */
-.combo-section {
-  background: #1e293b;
-  padding: 15px;
-  border-radius: 10px;
-  margin-top: 20px;
-}
-
-.combo-section h2 {
-  color: #f97316;
-  margin-bottom: 10px;
-}
-
-.combo-output {
-  background: #0f172a;
-  padding: 10px;
+  padding: 5px 10px;
   border-radius: 8px;
-  font-family: monospace;
-  font-size: 0.85rem;
-  margin-bottom: 10px;
-  overflow-x: auto;
+  font-weight: 700;
 }
 
-.combo-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-#copy-combo {
-  background: #38bdf8;
-  color: #0f172a;
-  padding: 6px 12px;
-  border: none;
-  border-radius: 6px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-#copy-combo:hover {
-  background: #0284c7;
+.value-high {
+  background-color: var(--success);
   color: white;
 }
 
-/* 📱 Responsive */
+.value-mid {
+  background-color: var(--warning);
+  color: black;
+}
+
+.value-low {
+  background-color: var(--danger);
+  color: white;
+}
+
+/* 🌗 Theme Toggle */
+.theme-toggle {
+  position: fixed;
+  top: 15px;
+  right: 15px;
+  padding: 8px 10px;
+  background: var(--card-bg-dark);
+  border: 1px solid var(--border-dark);
+  color: var(--text-dark);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.3s;
+  font-size: 0.9rem;
+}
+
+.light-mode .theme-toggle {
+  background: var(--card-bg-light);
+  border: 1px solid var(--border-light);
+  color: var(--text-light);
+}
+
+/* 📱 Responsiv */
 @media (max-width: 600px) {
-  .controls {
+  .filters {
     flex-direction: column;
     align-items: stretch;
   }
-
-  .team img {
-    width: 22px;
-    height: 22px;
-  }
-
-  .combo-footer {
+  .match-card {
     flex-direction: column;
-    gap: 10px;
+    align-items: flex-start;
+  }
+  .match-info {
+    text-align: left;
+    margin-top: 10px;
   }
 }
