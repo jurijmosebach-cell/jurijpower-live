@@ -1,36 +1,185 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Jurij Power ⚽ Value Tool</title>
-  <link rel="stylesheet" href="style.css"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Value Betting Dashboard ⚽️</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f3f4f6;
+      margin: 0;
+      padding: 0;
+    }
+
+    header {
+      background: #111827;
+      color: white;
+      padding: 15px;
+      text-align: center;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 1.8rem;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 10px;
+      background: #e5e7eb;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .controls select,
+    .controls input,
+    .controls button {
+      padding: 6px 10px;
+      font-size: 14px;
+      border-radius: 6px;
+      border: 1px solid #d1d5db;
+      background: white;
+    }
+
+    .controls button {
+      background: #2563eb;
+      color: white;
+      cursor: pointer;
+      border: none;
+      transition: background 0.2s;
+    }
+
+    .controls button:hover {
+      background: #1d4ed8;
+    }
+
+    h2 {
+      padding: 0 15px;
+      margin-top: 20px;
+      color: #111827;
+    }
+
+    .match-card {
+      background: #f9fafb;
+      padding: 10px;
+      border-radius: 12px;
+      margin: 10px 15px;
+      transition: 0.3s;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+
+    .card-high { background: #d1fae5; }
+    .card-mid { background: #fef3c7; }
+    .card-low { background: #fee2e2; }
+
+    .match-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: bold;
+      margin-bottom: 6px;
+      font-size: 14px;
+    }
+
+    .match-header img {
+      height: 20px;
+      vertical-align: middle;
+    }
+
+    .match-header div {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .odds-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .odds-item {
+      display: flex;
+      justify-content: space-between;
+      flex: 1 1 48%;
+      background: #fff;
+      padding: 5px;
+      border-radius: 6px;
+      font-size: 13px;
+    }
+
+    .value-high { color: #16a34a; font-weight: bold; }
+    .value-mid { color: #ca8a04; }
+    .value-low { color: #dc2626; }
+
+    pre {
+      background: #f3f4f6;
+      padding: 10px;
+      border-radius: 8px;
+      margin: 0 15px;
+      white-space: pre-wrap;
+      font-size: 14px;
+    }
+
+    footer {
+      text-align: center;
+      padding: 15px;
+      color: #6b7280;
+      font-size: 13px;
+    }
+
+    @media (max-width: 600px) {
+      .odds-item { flex: 1 1 100%; }
+      h1 { font-size: 1.4rem; }
+    }
+  </style>
 </head>
 <body>
+
   <header>
-    <h1>⚽ JurijPower Value Tool</h1>
-    <button id="refresh">🔄 Aktualisieren</button>
-    <span>Letztes Update: <span id="last-update"></span></span>
+    <h1>⚽ Value Betting Dashboard</h1>
   </header>
 
-  <main>
-    <section>
-      <h2>📡 Live Spiele</h2>
-      <div id="live-matches" class="matches"></div>
-    </section>
+  <div class="controls">
+    <button id="refresh">🔄 Aktualisieren</button>
+    <input type="date" id="match-date">
+    <select id="filter-value">
+      <option value="0">Alle Spiele</option>
+      <option value="0.05">Value > 5%</option>
+      <option value="0.1">Value > 10%</option>
+    </select>
+    <select id="league-filter">
+      <option value="">Alle Ligen</option>
+      <option value="39">Premier League</option>
+      <option value="140">La Liga</option>
+      <option value="78">Bundesliga</option>
+      <option value="135">Serie A</option>
+      <option value="61">Ligue 1</option>
+    </select>
+  </div>
 
-    <section>
-      <h2>🗓️ Pre-Match Spiele</h2>
-      <div id="upcoming-matches" class="matches"></div>
-    </section>
+  <p style="padding:0 15px;">Letztes Update: <span id="last-update"></span></p>
 
-    <section>
-      <h2>🔥 Beste Kombi (Top Value)</h2>
-      <pre id="combo-output"></pre>
-      <p>Gesamtquote: <span id="total-odds">1.00</span> | Kombi-Value: <span id="total-value">0%</span></p>
-      <button id="copy-combo">📋 Kombi kopieren</button>
-    </section>
-  </main>
+  <h2>📡 Live Spiele</h2>
+  <div id="live-matches"></div>
+
+  <h2>📅 Bevorstehende Spiele</h2>
+  <div id="upcoming-matches"></div>
+
+  <h2>💥 Beste Kombi</h2>
+  <pre id="combo-output"></pre>
+  <p style="padding:0 15px;">Gesamtquote: <span id="total-odds"></span></p>
+  <p style="padding:0 15px;">Gesamtvalue: <span id="total-value"></span></p>
+  <div style="padding:0 15px 20px;">
+    <button id="copy-combo">📋 Kombi kopieren</button>
+  </div>
+
+  <footer>
+    🚀 Powered by API-FOOTBALL & dein Value Betting Tool
+  </footer>
 
   <script src="app.js"></script>
 </body>
