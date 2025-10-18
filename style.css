@@ -1,191 +1,230 @@
-/* 🌙 Modern Dark Mode Standard Design */
-
+/* ========== Global ========== */
 :root {
-  --bg-dark: #0f172a;
-  --bg-light: #f9fafb;
-  --text-dark: #f1f5f9;
-  --text-light: #0f172a;
-  --primary: #3b82f6;
-  --accent: #06b6d4;
-  --success: #16a34a;
-  --warning: #facc15;
-  --danger: #dc2626;
-  --card-bg-dark: #1e293b;
-  --card-bg-light: #ffffff;
-  --border-dark: #334155;
-  --border-light: #e2e8f0;
+  --bg-color: #121212;
+  --card-bg: #1e1e1e;
+  --text-color: #f1f1f1;
+  --accent: #00d26a;
+  --mid: #f7b500;
+  --low: #ff4e4e;
+  --border: #2a2a2a;
+  --shadow: rgba(0, 0, 0, 0.4);
 }
 
-/* 🌙 Default Dark Mode */
+* {
+  box-sizing: border-box;
+  font-family: "Segoe UI", Roboto, sans-serif;
+}
+
 body {
-  background-color: var(--bg-dark);
-  color: var(--text-dark);
-  font-family: "Inter", Arial, sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-color);
   margin: 0;
   padding: 0;
-  transition: all 0.3s ease;
-}
-
-.light-mode {
-  background-color: var(--bg-light);
-  color: var(--text-light);
-}
-
-.container {
-  max-width: 1000px;
-  margin: auto;
-  padding: 20px;
-}
-
-/* 🧭 Header */
-header {
-  text-align: center;
-  padding: 10px;
-  margin-bottom: 20px;
-}
-
-header h1 {
-  font-size: 1.8rem;
-  font-weight: 700;
-  color: var(--primary);
-}
-
-/* 🧭 Filter-Bereich */
-.filters {
+  min-height: 100vh;
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 10px;
-  background-color: var(--card-bg-dark);
-  padding: 15px;
-  border-radius: 12px;
-  border: 1px solid var(--border-dark);
+  flex-direction: column;
 }
 
-.light-mode .filters {
-  background-color: var(--card-bg-light);
-  border: 1px solid var(--border-light);
-}
-
-select, input[type="date"], button {
-  padding: 8px 10px;
-  border-radius: 8px;
-  border: 1px solid var(--border-dark);
-  background: var(--bg-dark);
-  color: var(--text-dark);
-  font-size: 0.95rem;
-}
-
-.light-mode select,
-.light-mode input[type="date"],
-.light-mode button {
-  background: var(--bg-light);
-  color: var(--text-light);
-  border: 1px solid var(--border-light);
-}
-
-button {
-  background-color: var(--primary);
-  color: white;
-  cursor: pointer;
-  transition: 0.3s;
-}
-
-button:hover {
-  background-color: var(--accent);
-}
-
-/* 🏟️ Spielkarten */
-.match-card {
-  background-color: var(--card-bg-dark);
-  margin-top: 15px;
-  padding: 15px;
-  border-radius: 12px;
-  border: 1px solid var(--border-dark);
+/* ========== Header ========== */
+header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  transition: 0.2s;
+  background: var(--card-bg);
+  padding: 15px 20px;
+  box-shadow: 0 2px 10px var(--shadow);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.header-actions {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+button {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s ease;
+}
+
+button:hover {
+  background: #00a656;
+}
+
+/* ========== Filter Bar ========== */
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  padding: 15px 20px;
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.filter-bar label {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.9rem;
+}
+
+.filter-bar input,
+.filter-bar select {
+  padding: 6px;
+  background: #2a2a2a;
+  color: #fff;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  margin-top: 4px;
+}
+
+/* ========== Matches ========== */
+.matches-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 15px;
+  padding: 20px;
+}
+
+.match-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 2px 6px var(--shadow);
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: transform 0.2s ease;
 }
 
 .match-card:hover {
-  transform: scale(1.02);
+  transform: translateY(-4px);
 }
 
-.light-mode .match-card {
-  background-color: var(--card-bg-light);
-  border: 1px solid var(--border-light);
+.card-high {
+  border-left: 4px solid var(--accent);
 }
 
-.match-teams {
-  font-weight: 600;
-  font-size: 1rem;
+.card-mid {
+  border-left: 4px solid var(--mid);
 }
 
-.match-info {
-  text-align: right;
+.card-low {
+  border-left: 4px solid var(--low);
 }
 
-.match-time {
+/* ========== Match Header ========== */
+.match-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: bold;
+}
+
+.match-header div {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.match-header img {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+}
+
+/* ========== Odds ========== */
+.odds-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.odds-item {
+  display: flex;
+  justify-content: space-between;
   font-size: 0.9rem;
-  opacity: 0.8;
-}
-
-/* 📊 Value Anzeige */
-.value {
-  padding: 5px 10px;
-  border-radius: 8px;
-  font-weight: 700;
+  padding: 6px 8px;
+  background: #2a2a2a;
+  border-radius: 6px;
 }
 
 .value-high {
-  background-color: var(--success);
-  color: white;
+  color: var(--accent);
+  font-weight: 600;
 }
 
 .value-mid {
-  background-color: var(--warning);
-  color: black;
+  color: var(--mid);
 }
 
 .value-low {
-  background-color: var(--danger);
-  color: white;
+  color: var(--low);
 }
 
-/* 🌗 Theme Toggle */
-.theme-toggle {
-  position: fixed;
-  top: 15px;
-  right: 15px;
-  padding: 8px 10px;
-  background: var(--card-bg-dark);
-  border: 1px solid var(--border-dark);
-  color: var(--text-dark);
-  border-radius: 8px;
-  cursor: pointer;
-  transition: 0.3s;
+/* ========== Combo Box ========== */
+.combo-box {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 2px 6px var(--shadow);
+  padding: 20px;
+  margin: 20px;
+}
+
+.combo-box pre {
+  background: #2a2a2a;
+  padding: 10px;
+  border-radius: 6px;
   font-size: 0.9rem;
+  white-space: pre-wrap;
 }
 
-.light-mode .theme-toggle {
-  background: var(--card-bg-light);
-  border: 1px solid var(--border-light);
-  color: var(--text-light);
+.combo-box p {
+  margin: 8px 0;
 }
 
-/* 📱 Responsiv */
+.combo-box button {
+  margin-top: 10px;
+}
+
+/* ========== Footer ========== */
+footer {
+  text-align: center;
+  padding: 15px;
+  background: var(--card-bg);
+  border-top: 1px solid var(--border);
+  margin-top: auto;
+  font-size: 0.85rem;
+  color: #aaa;
+}
+
+/* ========== Responsive ========== */
 @media (max-width: 600px) {
-  .filters {
+  .filter-bar {
     flex-direction: column;
-    align-items: stretch;
   }
-  .match-card {
-    flex-direction: column;
-    align-items: flex-start;
+
+  .match-header div {
+    flex-wrap: wrap;
+    gap: 4px;
   }
-  .match-info {
-    text-align: left;
-    margin-top: 10px;
+
+  .odds-item {
+    font-size: 0.8rem;
   }
 }
