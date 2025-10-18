@@ -3,37 +3,37 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>⚽ JurijPower Live Tool – PRO</title>
+  <title>JurijPower Live Tool – PRO ⚽</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <h1>⚽ JurijPower Live Tool – PRO</h1>
+  <header>
+    <h1>⚽ JurijPower Live Tool – PRO</h1>
+    <button id="refreshBtn">🔄 Aktualisieren</button>
+    <p id="lastUpdate">Letztes Update: -</p>
+  </header>
 
-  <div class="controls">
-    <select id="filterSelect">
-      <option value="all">🌍 Alle Ligen</option>
-      <option value="favorites">⭐ Favoriten</option>
-    </select>
-    <button id="refreshButton">🔄 Aktualisieren</button>
-  </div>
+  <section>
+    <h2>📡 Live Spiele</h2>
+    <div id="liveGames"></div>
+  </section>
 
-  <p>🕒 Letztes Update: <span id="lastUpdate"></span></p>
+  <section>
+    <h2>📅 Kommende Spiele (24 h)</h2>
+    <div id="upcomingGames"></div>
+  </section>
 
-  <h2>📡 Live Spiele</h2>
-  <div id="live-matches"></div>
-
-  <h2>📅 Kommende Spiele (24 h)</h2>
-  <div id="upcoming-matches"></div>
-
-  <h2>💎 Automatische Kombi mit höchstem Value</h2>
-  <div id="best-combo" class="combo-box">
-    <p>Gesamtquote: <span id="total-odds">1.00</span></p>
-    <p>Kombi-Value: <span id="combo-value">1.00</span></p>
-    <button id="copy-combo">📋 Kombi kopieren</button>
-  </div>
+  <section>
+    <h2>💎 Automatische Kombi mit höchstem Value</h2>
+    <div id="bestCombo" class="comboBox">
+      <p id="totalOdds">Gesamtquote: 1.00</p>
+      <p id="totalValue">Kombi-Value: 1.00</p>
+      <button id="copyCombo">📋 Kombi kopieren</button>
+    </div>
+  </section>
 
   <footer>
-    Made with ❤️ by JurijPower | Live-Daten von SoccerDataAPI
+    <p>Made with ❤️ by JurijPower | Live-Daten von API-Football</p>
   </footer>
 
   <script src="app.js"></script>
