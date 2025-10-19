@@ -1,19 +1,40 @@
+const CACHE_NAME = 'jurijpower-cache-v2';
+const URLS_TO_CACHE = [
+  './',
+  './index.html',
+  './app.js',
+  './style.css',
+  './manifest.json',
+  './icon.png'
+];
+
+// Install
 self.addEventListener('install', event => {
   console.log('[SW] Service Worker installiert');
   event.waitUntil(
-    caches.open('jurijpower-cache-v1').then(cache => {
-      return cache.addAll([
-        './',
-        './index.html',
-        './script.js',
-        './style.css',
-        './manifest.json',
-        './icon.png'
-      ]);
+    caches.open(CACHE_NAME).then(cache => {
+      return cache.addAll(URLS_TO_CACHE);
     })
   );
+  self.skipWaiting();
 });
 
+// Activate
+self.addEventListener('activate', event => {
+  console.log('[SW] Aktiviert');
+  event.waitUntil(
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames
+          .filter(name => name !== CACHE_NAME)
+          .map(name => caches.delete(name))
+      );
+    })
+  );
+  self.clients.claim();
+});
+
+// Fetch (Offline-Fallback)
 self.addEventListener('fetch', event => {
   event.respondWith(
     caches.match(event.request).then(response => {
@@ -22,10 +43,7 @@ self.addEventListener('fetch', event => {
   );
 });
 
-self.addEventListener('activate', event => {
-  console.log('[SW] Aktiviert');
-});
-
+// Optional Push (kann später erweitert werden)
 self.addEventListener('push', event => {
   const data = event.data ? event.data.text() : '⚽ Tor!';
   event.waitUntil(
