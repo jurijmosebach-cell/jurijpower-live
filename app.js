@@ -84,15 +84,21 @@ function renderMatches(matches, odds, containerId) {
     return;
   }
 
+  // Sortierte Liste (Pinned oben)
   matches.sort((a, b) => (pinnedMatches.has(b.fixture.id) ? 1 : 0) - (pinnedMatches.has(a.fixture.id) ? 1 : 0));
 
   matches.forEach(match => {
+    // Filter anwenden
     if (leagueFilter && match.league.id != leagueFilter) return;
-    if (teamSearch && !match.teams.home.name.toLowerCase().includes(teamSearch) && !match.teams.away.name.toLowerCase().includes(teamSearch)) return;
+    if (teamSearch &&
+        !match.teams.home.name.toLowerCase().includes(teamSearch) &&
+        !match.teams.away.name.toLowerCase().includes(teamSearch)
+    ) return;
+
     if (quickFilterMode === "top" && !isTopLeague(match.league.id)) return;
 
     const o = odds.find(x => x.fixture.id === match.fixture.id);
-    if (!o || o.bookmakers.length === 0) return;
+    if (!o || !o.bookmakers || o.bookmakers.length === 0) return;
 
     const bets = o.bookmakers[0].bets;
     const bet1x2 = bets.find(b => b.name === "Match Winner");
@@ -124,22 +130,26 @@ function renderMatches(matches, odds, containerId) {
       </div>
       <div class="odds-list">
         ${bet1x2.values.map((v, i) => {
+          const odd = parseFloat(v.odd);
           const val = calculateValue(normalizedProbs[i], odd);
-let cls = val >= 0.1 ? 'value-high' : val >= 0 ? 'value-mid' : 'value-low';
+          let cls = val >= 0.1 ? 'value-high' : val >= 0 ? 'value-mid' : 'value-low';
 
-// 👇 Glow nur aktivieren, wenn Value ≥ 10 %
-if (val >= 0.1) {
-  cls += ' glow';
-}
+          // ✨ Glow nur aktivieren, wenn Value ≥ 10 %
+          if (val >= 0.1) {
+            cls += ' glow';
+          }
 
-return `<div class="odds-item">
-  <span>${v.value} @ ${v.odd}</span>
-  <span class="${cls}">${(val * 100).toFixed(1)}%</span>
-</div>`;
+          return `
+            <div class="odds-item">
+              <span>${v.value} @ ${v.odd}</span>
+              <span class="${cls}">${(val * 100).toFixed(1)}%</span>
+            </div>
+          `;
         }).join('')}
       </div>
     `;
 
+    // Pin-Funktion
     div.querySelector(".pin-btn").addEventListener('click', () => {
       if (pinnedMatches.has(match.fixture.id)) pinnedMatches.delete(match.fixture.id);
       else pinnedMatches.add(match.fixture.id);
@@ -149,12 +159,6 @@ return `<div class="odds-item">
     container.appendChild(div);
   });
 }
-
-function isTopLeague(id) {
-  const top = [39, 140, 135, 78, 61, 2]; // Premier League, La Liga, Serie A, Bundesliga, Ligue 1, CL
-  return top.includes(Number(id));
-}
-
 // ================== COMBO ==================
 function buildBestCombo(odds) {
   if (!odds || odds.length === 0) return;
