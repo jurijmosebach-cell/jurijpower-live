@@ -159,6 +159,13 @@ function renderMatches(matches, odds, containerId) {
     container.appendChild(div);
   });
 }
+
+// ================== TOP LEAGUES ==================
+function isTopLeague(id) {
+  const top = [39, 140, 135, 78, 61, 2]; // Premier League, La Liga, Serie A, Bundesliga, Ligue 1, CL
+  return top.includes(Number(id));
+}
+
 // ================== COMBO ==================
 function buildBestCombo(odds) {
   if (!odds || odds.length === 0) return;
@@ -171,7 +178,6 @@ function buildBestCombo(odds) {
     const match = o.fixture;
 
     bets.forEach(bet => {
-      // Nur 1X2 Markt berücksichtigen
       if (bet.name !== "Match Winner") return;
 
       const oddsArray = bet.values.map(v => parseFloat(v.odd));
@@ -192,7 +198,6 @@ function buildBestCombo(odds) {
     });
   });
 
-  // Sortieren nach Value
   combos.sort((a, b) => b.val - a.val);
   const best = combos.slice(0, 3);
 
