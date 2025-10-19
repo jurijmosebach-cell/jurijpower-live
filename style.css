@@ -90,10 +90,6 @@ header {
   margin-top: 0.3rem;
 }
 
-.value-high { color: #0f0; }
-.value-mid { color: #ff0; }
-.value-low { color: #f00; }
-
 footer {
   background: #1f1f1f;
   padding: 1rem;
@@ -107,6 +103,7 @@ footer {
   overflow-x: auto;
   max-height: 150px;
 }
+
 /* ==== Value Highlight ==== */
 .value-high {
   color: #00ff6a;
@@ -114,6 +111,7 @@ footer {
   background: rgba(0, 255, 106, 0.1);
   padding: 2px 6px;
   border-radius: 4px;
+  box-shadow: 0 0 6px rgba(0, 255, 106, 0.4);
 }
 
 .value-mid {
@@ -122,6 +120,7 @@ footer {
   background: rgba(255, 235, 59, 0.1);
   padding: 2px 6px;
   border-radius: 4px;
+  box-shadow: 0 0 6px rgba(255, 235, 59, 0.3);
 }
 
 .value-low {
@@ -130,17 +129,5 @@ footer {
   background: rgba(255, 75, 75, 0.1);
   padding: 2px 6px;
   border-radius: 4px;
-}
-
-/* Optional: leicht animierter Glow bei hohem Value */
-.value-high {
-  box-shadow: 0 0 6px rgba(0, 255, 106, 0.4);
-}
-
-.value-mid {
-  box-shadow: 0 0 6px rgba(255, 235, 59, 0.3);
-}
-
-.value-low {
   box-shadow: 0 0 6px rgba(255, 75, 75, 0.2);
 }
