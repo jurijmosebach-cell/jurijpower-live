@@ -12,7 +12,8 @@ let state = {
   pinnedMatches: new Set(),
   quickFilterMode: "all",
   lastUpdate: null,
-  cachedData: {}
+  cachedData: {},
+  cachedCombos: null // Neu: Cache für Combo-Berechnungen
 };
 
 // ================== UTILS ==================
@@ -20,7 +21,7 @@ const debounce = (func, delay) => {
   let timeoutId;
   return (...args) => {
     clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => func.apply(null, args), delay);
+    timeoutId = setTimeout(() => func(...args), delay);
   };
 };
 
@@ -30,14 +31,14 @@ const cacheData = (key, data) => {
 };
 
 const getCachedData = (key) => {
-  const cached = JSON.parse(localStorage.getItem(key));
-  return cached && (Date.now() - cached.timestamp) < CONFIG.CACHE_DURATION ? cached.data : null;
+  const cached = JSON.parse(localStorage.getItem(key)) || {};
+  return (Date.now() - (cached.timestamp || 0)) < CONFIG.CACHE_DURATION ? cached.data : null;
 };
 
 // ================== API ==================
 const fetchAPI = async (endpoint, retries = CONFIG.MAX_RETRIES) => {
   const cacheKey = `api_${endpoint.replace(/[/?=]/g, '_')}`;
-  const cached = getCachedData(cacheKey);
+  let cached = getCachedData(cacheKey);
   if (cached) return cached;
 
   try {
@@ -58,6 +59,7 @@ const fetchAPI = async (endpoint, retries = CONFIG.MAX_RETRIES) => {
     const json = await response.json();
     if (!json.response) throw new Error("Ungültige API-Antwort");
     cacheData(cacheKey, json);
+    cached = json;
     return json;
   } catch (e) {
     console.error("❌ API Fehler:", e.message);
@@ -73,41 +75,53 @@ const fetchAPI = async (endpoint, retries = CONFIG.MAX_RETRIES) => {
 
 // ================== LOAD DATA ==================
 const loadData = async () => {
+  const start = performance.now();
   state.lastUpdate = new Date().toLocaleTimeString();
   document.getElementById('last-update').textContent = state.lastUpdate;
 
   const selectedDate = document.getElementById('match-date').value || new Date().toISOString().split('T')[0];
 
-  const [liveFixtures, upcomingFixtures, oddsLive, oddsUpcoming] = await Promise.all([
+  const [liveFixtures, oddsLive] = await Promise.all([
     fetchAPI("/fixtures?live=all"),
-    fetchAPI(`/fixtures?date=${selectedDate}`),
-    fetchAPI("/odds?live=all"),
-    fetchAPI(`/odds?date=${selectedDate}`)
+    fetchAPI("/odds?live=all")
   ]);
+
+  // Lazy-Load für Upcoming (nur bei Bedarf laden)
+  let upcomingFixtures = { response: [] }, oddsUpcoming = { response: [] };
+  if (selectedDate !== new Date().toISOString().split('T')[0]) { // Nur laden, wenn Datum != heute
+    [upcomingFixtures, oddsUpcoming] = await Promise.all([
+      fetchAPI(`/fixtures?date=${selectedDate}`),
+      fetchAPI(`/odds?date=${selectedDate}`)
+    ]);
+  }
 
   renderMatches(liveFixtures.response, oddsLive.response, "live-matches");
   renderMatches(upcomingFixtures.response, oddsUpcoming.response, "upcoming-matches");
-  buildBestCombo([...oddsLive.response, ...oddsUpcoming.response]);
+
+  const allOdds = [...oddsLive.response, ...oddsUpcoming.response];
+  buildBestCombo(allOdds);
   fillLeagueDropdown([...liveFixtures.response, ...upcomingFixtures.response]);
+
+  console.log(`LoadData Dauer: ${performance.now() - start}ms`);
 };
 
 // ================== LEAGUE DROPDOWN ==================
 const fillLeagueDropdown = (matches) => {
   const dropdown = document.getElementById('league-filter');
-  const leagues = [...new Set(matches.map(m => `${m.league.id}|${m.league.name}`))];
+  const leaguesSet = new Set(matches.map(m => `${m.league.id}|${m.league.name}`));
   dropdown.innerHTML = '<option value="">Alle Ligen</option>';
-  leagues.forEach(l => {
+  [...leaguesSet].forEach(l => {
     const [id, name] = l.split("|");
-    const option = new Option(name, id);
-    dropdown.add(option);
+    dropdown.add(new Option(name, id));
   });
 };
 
 // ================== VALUE CALC ==================
-const calculateValue = (prob, odd) => (!odd || odd <= 0) ? 0 : prob * odd - 1;
+const calculateValue = (prob, odd) => (odd > 0 ? prob * odd - 1 : 0);
 
 // ================== RENDER ==================
 const renderMatches = (matches, odds, containerId) => {
+  const start = performance.now();
   const container = document.getElementById(containerId);
   if (!matches?.length) {
     container.innerHTML = "<p>Keine Spiele gefunden</p>";
@@ -121,67 +135,88 @@ const renderMatches = (matches, odds, containerId) => {
   const filteredMatches = matches.filter(match => {
     if (leagueFilter && match.league.id != leagueFilter) return false;
     if (teamSearch && !match.teams.home.name.toLowerCase().includes(teamSearch) && !match.teams.away.name.toLowerCase().includes(teamSearch)) return false;
-    if (quickFilterMode === "top" && !isTopLeague(match.league.id)) return false;
+    if (state.quickFilterMode === "top" && !isTopLeague(match.league.id)) return false;
     return true;
   });
 
-  container.innerHTML = "";
-  filteredMatches.sort((a, b) => (state.pinnedMatches.has(b.fixture.id) ? 1 : 0) - (state.pinnedMatches.has(a.fixture.id) ? 1 : 0)).forEach(match => {
-    const o = odds.find(x => x.fixture.id === match.fixture.id);
-    const div = document.createElement("div");
-    div.className = "match-card" + (state.pinnedMatches.has(match.fixture.id) ? " pinned" : "");
+  const fragment = document.createDocumentFragment(); // Batch DOM-Updates
+  filteredMatches.sort((a, b) => (state.pinnedMatches.has(b.fixture.id) ? 1 : 0) - (state.pinnedMatches.has(a.fixture.id) ? 1 : 0))
+    .forEach(match => {
+      const o = odds.find(x => x?.fixture?.id === match.fixture.id);
+      const div = document.createElement("div");
+      div.className = "match-card" + (state.pinnedMatches.has(match.fixture.id) ? " pinned" : "");
 
-    if (!o?.bookmakers?.length || !o.bookmakers[0].bets) {
-      div.innerHTML = `
-        <div class="match-header">
-          <div><img src="${match.teams.home.logo || ''}"> ${match.teams.home.name} <span>vs</span> ${match.teams.away.name} <img src="${match.teams.away.logo || ''}"></div>
-          <button class="pin-btn">${state.pinnedMatches.has(match.fixture.id) ? "📍" : "📌"}</button>
-        </div>
-        <div class="odds-list"><div class="odds-item no-odds">❌ Quoten nicht verfügbar</div></div>
-      `;
-    } else {
-      const bet1x2 = o.bookmakers[0].bets.find(b => b.name === "Match Winner");
-      if (!bet1x2?.values?.length) {
-        div.innerHTML = `
-          <div class="match-header">
-            <div><img src="${match.teams.home.logo || ''}"> ${match.teams.home.name} <span>vs</span> ${match.teams.away.name} <img src="${match.teams.away.logo || ''}"></div>
-            <button class="pin-btn">${state.pinnedMatches.has(match.fixture.id) ? "📍" : "📌"}</button>
-          </div>
-          <div class="odds-list"><div class="odds-item no-odds">❌ Kein Match Winner-Bet</div></div>
-        `;
+      const pinBtn = document.createElement("button");
+      pinBtn.className = "pin-btn";
+      pinBtn.textContent = state.pinnedMatches.has(match.fixture.id) ? "📍" : "📌";
+      pinBtn.addEventListener('click', () => {
+        state.pinnedMatches.has(match.fixture.id) ? state.pinnedMatches.delete(match.fixture.id) : state.pinnedMatches.add(match.fixture.id);
+        renderMatches(matches, odds, containerId); // Re-Render nur bei Pin-Änderung
+      });
+
+      if (!o?.bookmakers?.length || !o.bookmakers[0]?.bets) {
+        const header = document.createElement("div");
+        header.className = "match-header";
+        const teamsDiv = document.createElement("div");
+        teamsDiv.innerHTML = `<img src="${match.teams.home.logo || ''}" loading="lazy"> ${match.teams.home.name} <span>vs</span> ${match.teams.away.name} <img src="${match.teams.away.logo || ''}" loading="lazy">`;
+        header.append(teamsDiv, pinBtn);
+
+        const oddsList = document.createElement("div");
+        oddsList.className = "odds-list";
+        oddsList.innerHTML = '<div class="odds-item no-odds">❌ Quoten nicht verfügbar</div>';
+
+        div.append(header, oddsList);
       } else {
-        const oddsArray = bet1x2.values.map(v => parseFloat(v.odd) || 0);
-        const impliedProbs = oddsArray.map(o => o ? 1 / o : 0);
-        const sumProbs = impliedProbs.reduce((a, b) => a + b, 1);
-        const normalizedProbs = impliedProbs.map(p => p / sumProbs);
-        const maxVal = Math.max(...oddsArray.map((odd, i) => calculateValue(normalizedProbs[i], odd)));
+        const bet1x2 = o.bookmakers[0].bets.find(b => b.name === "Match Winner");
+        if (!bet1x2?.values?.length) {
+          const header = document.createElement("div");
+          header.className = "match-header";
+          const teamsDiv = document.createElement("div");
+          teamsDiv.innerHTML = `<img src="${match.teams.home.logo || ''}" loading="lazy"> ${match.teams.home.name} <span>vs</span> ${match.teams.away.name} <img src="${match.teams.away.logo || ''}" loading="lazy">`;
+          header.append(teamsDiv, pinBtn);
 
-        if (quickFilterMode === "value10" && maxVal < 0.1) return;
-        if (maxVal < minValue) return;
+          const oddsList = document.createElement("div");
+          oddsList.className = "odds-list";
+          oddsList.innerHTML = '<div class="odds-item no-odds">❌ Kein Match Winner-Bet</div>';
 
-        div.innerHTML = `
-          <div class="match-header">
-            <div><img src="${match.teams.home.logo || ''}"> ${match.teams.home.name} <span>vs</span> ${match.teams.away.name} <img src="${match.teams.away.logo || ''}"></div>
-            <button class="pin-btn">${state.pinnedMatches.has(match.fixture.id) ? "📍" : "📌"}</button>
-          </div>
-          <div class="odds-list">
-            ${bet1x2.values.map((v, i) => {
-              const odd = parseFloat(v.odd) || 0;
-              const val = calculateValue(normalizedProbs[i], odd);
-              const cls = val >= 0.1 ? 'value-high glow' : val >= 0 ? 'value-mid' : 'value-low';
-              return `<div class="odds-item"><span>${v.value} @ ${v.odd}</span><span class="${cls}">${(val * 100).toFixed(1)}%</span></div>`;
-            }).join('')}
-          </div>
-        `;
+          div.append(header, oddsList);
+        } else {
+          const oddsArray = bet1x2.values.map(v => parseFloat(v.odd) || 0);
+          const impliedProbs = oddsArray.map(o => (o > 0 ? 1 / o : 0));
+          const sumProbs = impliedProbs.reduce((a, b) => a + b, 1);
+          const normalizedProbs = impliedProbs.map(p => p / sumProbs);
+          const maxVal = Math.max(...oddsArray.map((odd, i) => calculateValue(normalizedProbs[i], odd)));
+
+          if (state.quickFilterMode === "value10" && maxVal < 0.1) return;
+          if (maxVal < minValue) return;
+
+          const header = document.createElement("div");
+          header.className = "match-header";
+          const teamsDiv = document.createElement("div");
+          teamsDiv.innerHTML = `<img src="${match.teams.home.logo || ''}" loading="lazy"> ${match.teams.home.name} <span>vs</span> ${match.teams.away.name} <img src="${match.teams.away.logo || ''}" loading="lazy">`;
+          header.append(teamsDiv, pinBtn);
+
+          const oddsList = document.createElement("div");
+          oddsList.className = "odds-list";
+          bet1x2.values.forEach((v, i) => {
+            const odd = parseFloat(v.odd) || 0;
+            const val = calculateValue(normalizedProbs[i], odd);
+            const cls = val >= 0.1 ? 'value-high glow' : val >= 0 ? 'value-mid' : 'value-low';
+            const item = document.createElement("div");
+            item.className = "odds-item";
+            item.innerHTML = `<span>${v.value} @ ${v.odd}</span><span class="${cls}">${(val * 100).toFixed(1)}%</span>`;
+            oddsList.appendChild(item);
+          });
+
+          div.append(header, oddsList);
+        }
       }
-    }
-
-    div.querySelector(".pin-btn").addEventListener('click', () => {
-      state.pinnedMatches.has(match.fixture.id) ? state.pinnedMatches.delete(match.fixture.id) : state.pinnedMatches.add(match.fixture.id);
-      renderMatches(matches, odds, containerId);
+      fragment.appendChild(div);
     });
-    container.appendChild(div);
-  });
+
+  container.innerHTML = ""; // Vorher clearen
+  container.appendChild(fragment);
+  console.log(`RenderMatches Dauer (${containerId}): ${performance.now() - start}ms`);
 };
 
 // ================== TOP LEAGUES ==================
@@ -189,6 +224,15 @@ const isTopLeague = (id) => [39, 140, 135, 78, 61, 2].includes(Number(id));
 
 // ================== COMBO ==================
 const buildBestCombo = (odds) => {
+  const start = performance.now();
+  if (state.cachedCombos && JSON.stringify(state.cachedCombos.odds) === JSON.stringify(odds)) {
+    // Verwende Cached Combo, wenn Odds gleich
+    document.getElementById('combo-output').textContent = state.comboText || "Keine Value-Kombis verfügbar";
+    document.getElementById('total-odds').textContent = state.cachedCombos.totalOdds.toFixed(2);
+    document.getElementById('total-value').textContent = (state.cachedCombos.totalVal * 100).toFixed(1) + "%";
+    return;
+  }
+
   if (!odds?.length) {
     document.getElementById('combo-output').textContent = "Keine Quoten verfügbar";
     document.getElementById('total-odds').textContent = "0.00";
@@ -203,7 +247,7 @@ const buildBestCombo = (odds) => {
       .flatMap(bet => bet.values.map((v, i) => {
         const odd = parseFloat(v.odd) || 0;
         const oddsArray = bet.values.map(v => parseFloat(v.odd) || 0);
-        const impliedProbs = oddsArray.map(o => o ? 1 / o : 0);
+        const impliedProbs = oddsArray.map(o => (o > 0 ? 1 / o : 0));
         const sumProbs = impliedProbs.reduce((a, b) => a + b, 1);
         const normalizedProbs = impliedProbs.map(p => p / sumProbs);
         return { match: o.fixture, market: v.value, odd, val: calculateValue(normalizedProbs[i], odd) };
@@ -213,14 +257,16 @@ const buildBestCombo = (odds) => {
   combos.sort((a, b) => b.val - a.val);
   const best = combos.slice(0, 3);
 
-  state.comboText = best.reduce((text, c) => {
-    const totalOdds = best.reduce((prod, c) => prod * c.odd, 1);
-    const totalVal = best.reduce((sum, c) => sum + c.val, 0);
-    return text + `${c.match.teams.home.name} vs ${c.match.teams.away.name} | ${c.market} | Quote: ${c.odd.toFixed(2)} | Value: ${(c.val * 100).toFixed(1)}%\n`;
-  }, "");
+  state.comboText = best.map(c => `${c.match.teams.home.name} vs ${c.match.teams.away.name} | ${c.market} | Quote: ${c.odd.toFixed(2)} | Value: ${(c.val * 100).toFixed(1)}%\n`).join('');
+  const totalOdds = best.reduce((prod, c) => prod * c.odd, 1) || 0;
+  const totalVal = best.reduce((sum, c) => sum + c.val, 0) || 0;
+
   document.getElementById('combo-output').textContent = state.comboText || "Keine Value-Kombis verfügbar";
-  document.getElementById('total-odds').textContent = (best.reduce((prod, c) => prod * c.odd, 1) || 0).toFixed(2);
-  document.getElementById('total-value').textContent = (best.reduce((sum, c) => sum + c.val, 0) * 100 || 0).toFixed(1) + "%";
+  document.getElementById('total-odds').textContent = totalOdds.toFixed(2);
+  document.getElementById('total-value').textContent = (totalVal * 100).toFixed(1) + "%";
+
+  state.cachedCombos = { odds, totalOdds, totalVal }; // Cache speichern
+  console.log(`BuildBestCombo Dauer: ${performance.now() - start}ms`);
 };
 
 // ================== EVENT LISTENERS (OPTIMIZED) ==================
