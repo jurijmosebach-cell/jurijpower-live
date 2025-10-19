@@ -1,223 +1,43 @@
-/* ================== GLOBALE VARIABLEN ================== */
-:root {
-  --bg-primary: #121212;
-  --bg-secondary: #1f1f1f;
-  --text-primary: #f0f0f0;
-  --text-secondary: #fff;
-  --border-radius: 5px;
-  --spacing-sm: 0.5rem;
-  --spacing-md: 1rem;
-  --shadow-light: 0 0 6px rgba(255, 255, 255, 0.1);
-  --shadow-glow: 0 0 10px rgba(0, 255, 106, 0.6);
-}
-
-/* ================== GLOBALE STILE ================== */
-body {
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  font-family: Arial, sans-serif;
-  margin: 0;
-  padding: 0;
-  line-height: 1.5;
-}
+/* ================== GLOBALE VARIABLEN & STILE ================== */
+:root { --bg-p: #121212; --bg-s: #1f1f1f; --text-p: #f0f0f0; --text-s: #fff; --br: 5px; --sp-sm: 0.5rem; --sp-md: 1rem; --sh-l: 0 0 6px rgba(255,255,255,0.1); --sh-g: 0 0 10px rgba(0,255,106,0.6); }
+body { background: var(--bg-p); color: var(--text-p); font-family: Arial, sans-serif; margin: 0; padding: 0; line-height: 1.5; }
 
 /* ================== HEADER ================== */
-header {
-  text-align: center;
-  padding: var(--spacing-md);
-  background: var(--bg-secondary);
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  box-shadow: var(--shadow-light);
-}
-
-.controls {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--spacing-sm);
-  justify-content: center;
-  margin-top: var(--spacing-sm);
-}
-
-.controls input,
-.controls select,
-.controls button {
-  padding: 0.4rem;
-  border-radius: var(--border-radius);
-  border: none;
-  font-size: 1rem;
-  background: var(--bg-primary);
-  color: var(--text-secondary);
-  transition: background 0.2s ease;
-}
-
-.controls input:focus,
-.controls select:focus,
-.controls button:focus {
-  outline: 2px solid #00ff6a;
-  outline-offset: 2px;
-}
-
-.quick-filters {
-  margin-top: var(--spacing-sm);
-  display: flex;
-  justify-content: center;
-  gap: 0.2rem;
-}
-
-.quick-btn {
-  background: #333;
-  color: var(--text-secondary);
-  border: none;
-  padding: 0.4rem 0.8rem;
-  border-radius: var(--border-radius);
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
-
-.quick-btn:hover,
-.quick-btn:focus {
-  background: #555;
-}
-
-.quick-btn[aria-pressed="true"] {
-  background: #00ff6a;
-  color: var(--bg-primary);
-}
+header { text-align: center; padding: var(--sp-md); background: var(--bg-s); position: sticky; top: 0; z-index: 10; box-shadow: var(--sh-l); }
+.controls { display: flex; flex-wrap: wrap; gap: var(--sp-sm); justify-content: center; margin-top: var(--sp-sm); }
+.controls input, .controls select, .controls button { padding: 0.4rem; border-radius: var(--br); border: none; font-size: 1rem; background: var(--bg-p); color: var(--text-s); transition: background 0.2s ease; }
+.controls input:focus, .controls select:focus, .controls button:focus { outline: 2px solid #00ff6a; outline-offset: 2px; }
+.quick-filters { margin-top: var(--sp-sm); display: flex; justify-content: center; gap: 0.2rem; }
+.quick-btn { background: #333; color: var(--text-s); border: none; padding: 0.4rem 0.8rem; border-radius: var(--br); cursor: pointer; transition: background 0.2s ease; }
+.quick-btn:hover, .quick-btn:focus { background: #555; }
+.quick-btn[aria-pressed="true"] { background: #00ff6a; color: var(--bg-p); }
 
 /* ================== MATCHES ================== */
-.match-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: var(--spacing-md);
-  padding: var(--spacing-md);
-}
+.match-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--sp-md); padding: var(--sp-md); }
+.match-card { background: var(--bg-s); padding: var(--sp-md); border-radius: var(--br); position: relative; transition: transform 0.2s ease; }
+.match-card:hover { transform: translateY(-2px); }
+.match-card.pinned::before { content: "📌"; position: absolute; top: 10px; right: 10px; color: #00ff6a; }
+.match-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--sp-sm); }
+.match-header img { height: 24px; vertical-align: middle; margin: 0 0.2rem; }
 
-.match-card {
-  background: var(--bg-secondary);
-  padding: var(--spacing-md);
-  border-radius: var(--border-radius);
-  position: relative;
-  transition: transform 0.2s ease;
-}
-
-.match-card:hover {
-  transform: translateY(-2px);
-}
-
-.match-card.pinned::before {
-  content: "📌";
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  color: #00ff6a;
-}
-
-.match-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--spacing-sm);
-}
-
-.match-header img {
-  height: 24px;
-  vertical-align: middle;
-  margin: 0 0.2rem;
-}
-
-/* ================== ODDS ================== */
-.odds-list {
-  margin-top: var(--spacing-sm);
-}
-
-.odds-item {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 0.3rem;
-  padding: 0.2rem;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: var(--border-radius);
-}
+/* ================== ODDS & XG ================== */
+.odds-list { margin-top: var(--sp-sm); }
+.odds-item { display: flex; justify-content: space-between; margin-top: 0.3rem; padding: 0.2rem; background: rgba(255,255,255,0.05); border-radius: var(--br); }
+.xg-info { background: #e0f7fa; font-weight: bold; padding: 0.2rem; margin-top: 0.3rem; border-radius: var(--br); }
 
 /* ================== FOOTER ================== */
-footer {
-  background: var(--bg-secondary);
-  padding: var(--spacing-md);
-  text-align: center;
-  box-shadow: var(--shadow-light);
-}
-
-#combo-output {
-  background: #000;
-  padding: var(--spacing-sm);
-  border-radius: var(--border-radius);
-  overflow-x: auto;
-  max-height: 150px;
-  margin-bottom: var(--spacing-sm);
-  white-space: pre-wrap;
-}
+footer { background: var(--bg-s); padding: var(--sp-md); text-align: center; box-shadow: var(--sh-l); }
+#combo-output { background: #000; padding: var(--sp-sm); border-radius: var(--br); overflow-x: auto; max-height: 150px; margin-bottom: var(--sp-sm); white-space: pre-wrap; }
 
 /* ================== VALUE HIGHLIGHT ================== */
-.value-high,
-.value-mid,
-.value-low {
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-weight: bold;
-  transition: all 0.2s ease;
-}
-
-.value-high {
-  color: #00ff6a;
-  background: rgba(0, 255, 106, 0.1);
-  box-shadow: var(--shadow-glow);
-  will-change: transform, box-shadow;
-}
-
-.value-mid {
-  color: #ffeb3b;
-  background: rgba(255, 235, 59, 0.1);
-  box-shadow: 0 0 6px rgba(255, 235, 59, 0.3);
-}
-
-.value-low {
-  color: #ff4b4b;
-  background: rgba(255, 75, 75, 0.1);
-  box-shadow: 0 0 6px rgba(255, 75, 75, 0.2);
-}
+.value-high, .value-mid, .value-low { padding: 2px 6px; border-radius: 4px; font-weight: bold; transition: all 0.2s ease; }
+.value-high { color: #00ff6a; background: rgba(0,255,106,0.1); box-shadow: var(--sh-g); will-change: transform, box-shadow; }
+.value-mid { color: #ffeb3b; background: rgba(255,235,59,0.1); box-shadow: 0 0 6px rgba(255,235,59,0.3); }
+.value-low { color: #ff4b4b; background: rgba(255,75,75,0.1); box-shadow: 0 0 6px rgba(255,75,75,0.2); }
 
 /* ================== ANIMATIONEN ================== */
-.glow {
-  animation: pulse-glow 1.5s infinite alternate ease-in-out;
-  will-change: transform, box-shadow;
-}
-
-@keyframes pulse-glow {
-  0% {
-    box-shadow: 0 0 8px rgba(0, 255, 106, 0.4);
-    transform: scale(1);
-  }
-  100% {
-    box-shadow: 0 0 18px rgba(0, 255, 106, 0.8);
-    transform: scale(1.05);
-  }
-}
+.glow { animation: pulse-glow 1.5s infinite alternate ease-in-out; will-change: transform, box-shadow; }
+@keyframes pulse-glow { 0% { box-shadow: 0 0 8px rgba(0,255,106,0.4); transform: scale(1); } 100% { box-shadow: 0 0 18px rgba(0,255,106,0.8); transform: scale(1.05); } }
 
 /* ================== RESPONSIVE DESIGN ================== */
-@media (max-width: 600px) {
-  .controls {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .match-list {
-    grid-template-columns: 1fr;
-  }
-
-  .match-card {
-    margin: 0 auto;
-    max-width: 100%;
-  }
-}
+@media (max-width: 600px) { .controls { flex-direction: column; align-items: stretch; } .match-list { grid-template-columns: 1fr; } .match-card { margin: 0 auto; max-width: 100%; } }
