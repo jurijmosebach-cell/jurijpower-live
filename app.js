@@ -1,3 +1,55 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>⚽ Value Betting Tool</title>
+  <style>
+    body { font-family: Arial, sans-serif; background:#111; color:#eee; margin:0; padding:0; }
+    h1 { text-align:center; padding:10px; background:#222; margin:0; }
+    .controls { display:flex; flex-wrap:wrap; justify-content:center; gap:10px; padding:10px; background:#1a1a1a; }
+    select, input, button { padding:6px; border-radius:5px; border:none; }
+    button { cursor:pointer; background:#2e7d32; color:white; }
+    .match-card { background:#1c1c1c; margin:10px; padding:10px; border-radius:10px; box-shadow:0 0 8px #000; }
+    .match-card.pinned { border:1px solid gold; }
+    .match-header { display:flex; justify-content:space-between; align-items:center; }
+    .match-header img { height:20px; vertical-align:middle; }
+    .odds-list { margin-top:8px; }
+    .odds-item { display:flex; justify-content:space-between; padding:5px; border-bottom:1px solid #333; }
+    .odds-item.no-odds { color:#888; font-style:italic; }
+    .value-high { color:#4caf50; }
+    .value-mid { color:#ffb300; }
+    .value-low { color:#f44336; }
+    .glow { text-shadow:0 0 8px #4caf50; }
+    #combo-output { white-space:pre-wrap; background:#222; padding:10px; margin:10px; border-radius:10px; }
+    #last-update { font-size:0.9em; color:#aaa; text-align:center; margin-top:-5px; margin-bottom:5px; }
+  </style>
+</head>
+<body>
+  <h1>📊 Value Betting Tool</h1>
+  <div id="last-update"></div>
+  <div class="controls">
+    <input type="date" id="match-date"/>
+    <input type="text" id="team-search" placeholder="Team suchen...">
+    <select id="league-filter"></select>
+    <input type="number" id="filter-value" placeholder="Min. Value %" step="0.1" min="0">
+    <button id="refresh">🔄 Aktualisieren</button>
+    <button class="quick-btn" data-type="all">Alle</button>
+    <button class="quick-btn" data-type="top">Top-Ligen</button>
+    <button class="quick-btn" data-type="value10">Value ≥ 10%</button>
+  </div>
+
+  <div id="live-matches"></div>
+  <div id="upcoming-matches"></div>
+
+  <h2 style="text-align:center;">💎 Beste Kombi</h2>
+  <div id="combo-output">Lade Daten...</div>
+  <p style="text-align:center;">
+    Gesamtquote: <span id="total-odds">0.00</span> | Gesamt Value: <span id="total-value">0%</span>
+  </p>
+  <div style="text-align:center;"><button id="copy-combo">📋 Kombi kopieren</button></div>
+
+<script>
 // ================== CONFIG ==================
 const API_KEY = "c6ad1210c71b17cca24284ab8a9873b4";
 const BASE_URL = "https://v3.football.api-sports.io";
@@ -42,7 +94,7 @@ async function fetchAPI(endpoint) {
 
 // ================== LOAD DATA ==================
 async function loadData() {
-  document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
+  document.getElementById('last-update').textContent = "Letztes Update: " + new Date().toLocaleTimeString();
 
   const selectedDate = document.getElementById('match-date').value || new Date().toISOString().split('T')[0];
 
@@ -51,15 +103,8 @@ async function loadData() {
   const oddsLive = await fetchAPI("/odds?live=all");
   const oddsUpcoming = await fetchAPI(`/odds?date=${selectedDate}`);
 
-  console.log("📅 Datum:", selectedDate);
-  console.log("🎯 Fixtures Live:", liveFixtures);
-  console.log("🎯 Fixtures Upcoming:", upcomingFixtures);
-  console.log("💰 Odds Live:", oddsLive);
-  console.log("💰 Odds Upcoming:", oddsUpcoming);
-
   renderMatches(liveFixtures.response, oddsLive.response, "live-matches");
   renderMatches(upcomingFixtures.response, oddsUpcoming.response, "upcoming-matches");
-
   buildBestCombo([...oddsLive.response, ...oddsUpcoming.response]);
   fillLeagueDropdown([...liveFixtures.response, ...upcomingFixtures.response]);
 }
@@ -93,7 +138,7 @@ function renderMatches(matches, odds, containerId) {
   const teamSearch = document.getElementById('team-search').value.toLowerCase();
 
   if (!matches || matches.length === 0) {
-    container.innerHTML = "<p>Keine Spiele gefunden</p>";
+    container.innerHTML = "<p style='text-align:center;color:#777;'>Keine Spiele gefunden</p>";
     return;
   }
 
@@ -109,13 +154,17 @@ function renderMatches(matches, odds, containerId) {
     if (quickFilterMode === "top" && !isTopLeague(match.league.id)) return;
 
     const o = odds.find(x => x.fixture.id === match.fixture.id);
+    let bookmakerWithOdds = null;
+    if (o && o.bookmakers && o.bookmakers.length > 0) {
+      bookmakerWithOdds = o.bookmakers.find(b => b.bets && b.bets.length > 0);
+    }
 
     const div = document.createElement("div");
     div.className = "match-card";
     if (pinnedMatches.has(match.fixture.id)) div.classList.add("pinned");
 
-    // 🟡 Wenn KEINE Quoten vorhanden sind → trotzdem Match anzeigen
-    if (!o || !o.bookmakers || o.bookmakers.length === 0) {
+    // ❌ Keine Quoten
+    if (!bookmakerWithOdds) {
       div.innerHTML = `
         <div class="match-header">
           <div>
@@ -126,7 +175,7 @@ function renderMatches(matches, odds, containerId) {
           <button class="pin-btn">${pinnedMatches.has(match.fixture.id) ? "📍" : "📌"}</button>
         </div>
         <div class="odds-list">
-          <div class="odds-item no-odds">❌ Quoten noch nicht verfügbar</div>
+          <div class="odds-item no-odds">⚠️ Quoten noch nicht verfügbar<br><small>(meist 3–6 Std. vor Spielbeginn)</small></div>
         </div>
       `;
       div.querySelector(".pin-btn").addEventListener('click', () => {
@@ -138,8 +187,8 @@ function renderMatches(matches, odds, containerId) {
       return;
     }
 
-    // ✅ Quoten vorhanden → normal rendern
-    const bets = o.bookmakers[0].bets;
+    // ✅ Quoten da
+    const bets = bookmakerWithOdds.bets;
     const bet1x2 = bets.find(b => b.name === "Match Winner");
     if (!bet1x2) return;
 
@@ -189,7 +238,7 @@ function renderMatches(matches, odds, containerId) {
 
 // ================== TOP LEAGUES ==================
 function isTopLeague(id) {
-  const top = [39, 140, 135, 78, 61, 2]; 
+  const top = [39, 140, 135, 78, 61, 2];
   return top.includes(Number(id));
 }
 
@@ -206,7 +255,10 @@ function buildBestCombo(odds) {
 
   odds.forEach(o => {
     if (!o.bookmakers || o.bookmakers.length === 0) return;
-    const bets = o.bookmakers[0].bets;
+    const bookmaker = o.bookmakers.find(b => b.bets && b.bets.length > 0);
+    if (!bookmaker) return;
+
+    const bets = bookmaker.bets;
     const match = o.fixture;
 
     bets.forEach(bet => {
@@ -247,4 +299,10 @@ window.addEventListener('DOMContentLoaded', () => {
   const today = new Date().toISOString().split('T')[0];
   document.getElementById('match-date').value = today;
   loadData();
+
+  // ⏳ Auto-Refresh alle 2 Minuten
+  setInterval(loadData, 120000);
 });
+</script>
+</body>
+</html>
