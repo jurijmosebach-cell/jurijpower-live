@@ -24,14 +24,20 @@ document.querySelectorAll('.quick-btn').forEach(btn => {
 
 // ================== API ==================
 async function fetchAPI(endpoint) {
-  const response = await fetch(`${BASE_URL}${endpoint}`, {
-    method: "GET",
-    headers: {
-      "x-apisports-key": API_KEY,
-      "accept": "application/json"
-    }
-  });
-  return response.json();
+  try {
+    const response = await fetch(`${BASE_URL}${endpoint}`, {
+      method: "GET",
+      headers: {
+        "x-apisports-key": API_KEY,
+        "accept": "application/json"
+      }
+    });
+    const json = await response.json();
+    return json;
+  } catch (e) {
+    console.error("❌ API Fehler:", e);
+    return { response: [] };
+  }
 }
 
 // ================== LOAD DATA ==================
@@ -39,10 +45,17 @@ async function loadData() {
   document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
 
   const selectedDate = document.getElementById('match-date').value || new Date().toISOString().split('T')[0];
+
   const liveFixtures = await fetchAPI("/fixtures?live=all");
   const upcomingFixtures = await fetchAPI(`/fixtures?date=${selectedDate}`);
   const oddsLive = await fetchAPI("/odds?live=all");
   const oddsUpcoming = await fetchAPI(`/odds?date=${selectedDate}`);
+
+  console.log("📅 Datum:", selectedDate);
+  console.log("🎯 Fixtures Live:", liveFixtures);
+  console.log("🎯 Fixtures Upcoming:", upcomingFixtures);
+  console.log("💰 Odds Live:", oddsLive);
+  console.log("💰 Odds Upcoming:", oddsUpcoming);
 
   renderMatches(liveFixtures.response, oddsLive.response, "live-matches");
   renderMatches(upcomingFixtures.response, oddsUpcoming.response, "upcoming-matches");
@@ -84,11 +97,9 @@ function renderMatches(matches, odds, containerId) {
     return;
   }
 
-  // Sortierte Liste (Pinned oben)
   matches.sort((a, b) => (pinnedMatches.has(b.fixture.id) ? 1 : 0) - (pinnedMatches.has(a.fixture.id) ? 1 : 0));
 
   matches.forEach(match => {
-    // Filter anwenden
     if (leagueFilter && match.league.id != leagueFilter) return;
     if (teamSearch &&
         !match.teams.home.name.toLowerCase().includes(teamSearch) &&
@@ -98,26 +109,48 @@ function renderMatches(matches, odds, containerId) {
     if (quickFilterMode === "top" && !isTopLeague(match.league.id)) return;
 
     const o = odds.find(x => x.fixture.id === match.fixture.id);
-    if (!o || !o.bookmakers || o.bookmakers.length === 0) return;
 
+    const div = document.createElement("div");
+    div.className = "match-card";
+    if (pinnedMatches.has(match.fixture.id)) div.classList.add("pinned");
+
+    // 🟡 Wenn KEINE Quoten vorhanden sind → trotzdem Match anzeigen
+    if (!o || !o.bookmakers || o.bookmakers.length === 0) {
+      div.innerHTML = `
+        <div class="match-header">
+          <div>
+            <img src="${match.teams.home.logo}"> ${match.teams.home.name} 
+            <span>vs</span>
+            ${match.teams.away.name} <img src="${match.teams.away.logo}">
+          </div>
+          <button class="pin-btn">${pinnedMatches.has(match.fixture.id) ? "📍" : "📌"}</button>
+        </div>
+        <div class="odds-list">
+          <div class="odds-item no-odds">❌ Quoten noch nicht verfügbar</div>
+        </div>
+      `;
+      div.querySelector(".pin-btn").addEventListener('click', () => {
+        if (pinnedMatches.has(match.fixture.id)) pinnedMatches.delete(match.fixture.id);
+        else pinnedMatches.add(match.fixture.id);
+        loadData();
+      });
+      container.appendChild(div);
+      return;
+    }
+
+    // ✅ Quoten vorhanden → normal rendern
     const bets = o.bookmakers[0].bets;
     const bet1x2 = bets.find(b => b.name === "Match Winner");
     if (!bet1x2) return;
 
-    // Marktquoten normalisieren
     const oddsArray = bet1x2.values.map(v => parseFloat(v.odd));
     const impliedProbs = oddsArray.map(o => 1 / o);
     const sumProbs = impliedProbs.reduce((a, b) => a + b, 0);
     const normalizedProbs = impliedProbs.map(p => p / sumProbs);
 
-    // Maximales Value berechnen für Filter
     const maxVal = Math.max(...oddsArray.map((odd, i) => calculateValue(normalizedProbs[i], odd)));
     if (quickFilterMode === "value10" && maxVal < 0.1) return;
     if (maxVal < minValue) return;
-
-    const div = document.createElement("div");
-    div.className = "match-card";
-    if (pinnedMatches.has(match.fixture.id)) div.classList.add("pinned");
 
     div.innerHTML = `
       <div class="match-header">
@@ -133,12 +166,7 @@ function renderMatches(matches, odds, containerId) {
           const odd = parseFloat(v.odd);
           const val = calculateValue(normalizedProbs[i], odd);
           let cls = val >= 0.1 ? 'value-high' : val >= 0 ? 'value-mid' : 'value-low';
-
-          // ✨ Glow nur aktivieren, wenn Value ≥ 10 %
-          if (val >= 0.1) {
-            cls += ' glow';
-          }
-
+          if (val >= 0.1) cls += ' glow';
           return `
             <div class="odds-item">
               <span>${v.value} @ ${v.odd}</span>
@@ -149,7 +177,6 @@ function renderMatches(matches, odds, containerId) {
       </div>
     `;
 
-    // Pin-Funktion
     div.querySelector(".pin-btn").addEventListener('click', () => {
       if (pinnedMatches.has(match.fixture.id)) pinnedMatches.delete(match.fixture.id);
       else pinnedMatches.add(match.fixture.id);
@@ -162,24 +189,28 @@ function renderMatches(matches, odds, containerId) {
 
 // ================== TOP LEAGUES ==================
 function isTopLeague(id) {
-  const top = [39, 140, 135, 78, 61, 2]; // Premier League, La Liga, Serie A, Bundesliga, Ligue 1, CL
+  const top = [39, 140, 135, 78, 61, 2]; 
   return top.includes(Number(id));
 }
 
 // ================== COMBO ==================
 function buildBestCombo(odds) {
-  if (!odds || odds.length === 0) return;
+  if (!odds || odds.length === 0) {
+    document.getElementById('combo-output').textContent = "Keine Quoten verfügbar";
+    document.getElementById('total-odds').textContent = "0.00";
+    document.getElementById('total-value').textContent = "0%";
+    return;
+  }
+
   const combos = [];
 
   odds.forEach(o => {
     if (!o.bookmakers || o.bookmakers.length === 0) return;
-
     const bets = o.bookmakers[0].bets;
     const match = o.fixture;
 
     bets.forEach(bet => {
       if (bet.name !== "Match Winner") return;
-
       const oddsArray = bet.values.map(v => parseFloat(v.odd));
       const impliedProbs = oddsArray.map(o => 1 / o);
       const sumProbs = impliedProbs.reduce((a, b) => a + b, 0);
@@ -188,12 +219,7 @@ function buildBestCombo(odds) {
       bet.values.forEach((v, i) => {
         const odd = parseFloat(v.odd);
         const val = calculateValue(normalizedProbs[i], odd);
-        combos.push({
-          match,
-          market: v.value,
-          odd,
-          val
-        });
+        combos.push({ match, market: v.value, odd, val });
       });
     });
   });
@@ -211,7 +237,7 @@ function buildBestCombo(odds) {
     comboText += `${c.match.teams.home.name} vs ${c.match.teams.away.name} | ${c.market} | Quote: ${c.odd.toFixed(2)} | Value: ${(c.val * 100).toFixed(1)}%\n`;
   });
 
-  document.getElementById('combo-output').textContent = comboText;
+  document.getElementById('combo-output').textContent = comboText || "Keine Value-Kombis verfügbar";
   document.getElementById('total-odds').textContent = totalOdds.toFixed(2);
   document.getElementById('total-value').textContent = (totalVal * 100).toFixed(1) + "%";
 }
