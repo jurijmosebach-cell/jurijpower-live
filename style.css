@@ -111,7 +111,8 @@ footer {
   background: rgba(0, 255, 106, 0.1);
   padding: 2px 6px;
   border-radius: 4px;
-  box-shadow: 0 0 6px rgba(0, 255, 106, 0.4);
+  box-shadow: 0 0 10px rgba(0, 255, 106, 0.6);
+  animation: pulse-glow 1.5s infinite alternate ease-in-out;
 }
 
 .value-mid {
@@ -130,4 +131,16 @@ footer {
   padding: 2px 6px;
   border-radius: 4px;
   box-shadow: 0 0 6px rgba(255, 75, 75, 0.2);
+}
+
+/* ✨ Glow Animation */
+@keyframes pulse-glow {
+  0% {
+    box-shadow: 0 0 8px rgba(0, 255, 106, 0.4);
+    transform: scale(1);
+  }
+  100% {
+    box-shadow: 0 0 18px rgba(0, 255, 106, 0.8);
+    transform: scale(1.05);
+  }
 }
