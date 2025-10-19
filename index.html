@@ -3,79 +3,84 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Value Betting Tool für Live- und kommende Fußballspiele mit Wahrscheinlichkeitsberechnung.">
+  <meta name="author" content="Jurij Mosebach">
+  <meta property="og:title" content="JurijPower Live">
+  <meta property="og:description" content="Ein Tool zur Optimierung von Wettstrategien.">
+  <meta property="og:image" content="https://jurjimosebach-cell.github.io/icon.png">
+  <meta name="twitter:card" content="summary_large_image">
   <title>JurijPower Live</title>
 
   <!-- ✅ Manifest + PWA -->
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#000000">
 
-  <!-- ✅ CSS -->
-  <link rel="stylesheet" href="style.css">
+  <!-- ✅ CSS (Preload für bessere Performance) -->
+  <link rel="stylesheet" href="style.css" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="style.css"></noscript>
 </head>
 <body>
 
   <!-- ================= HEADER ================= -->
   <header>
     <h1>⚽ Value Betting Tool</h1>
-    <div class="controls">
-      <input type="date" id="match-date">
-      <select id="league-filter" aria-label="Liga filtern"></select>
-      <input type="text" id="team-search" placeholder="Team suchen...">
-      <input type="number" id="filter-value" placeholder="Min. Value %" step="0.01">
-      <button id="refresh" aria-label="Daten aktualisieren" title="Aktualisiert die Spieldaten">🔄 Aktualisieren</button>
+    <div class="controls" role="toolbar" aria-label="Filter- und Aktualisierungsoptionen">
+      <input type="date" id="match-date" aria-label="Datum auswählen" aria-controls="live-matches upcoming-matches">
+      <select id="league-filter" aria-label="Liga filtern" aria-controls="live-matches upcoming-matches">
+        <option value="">Alle Ligen</option>
+      </select>
+      <input type="text" id="team-search" placeholder="Team suchen..." aria-label="Team-Suche">
+      <input type="number" id="filter-value" placeholder="Min. Value %" step="0.01" aria-label="Mindestwertfilter">
+      <button id="refresh" aria-label="Daten aktualisieren" title="Aktualisiert die Spieldaten" tabindex="0">🔄 Aktualisieren</button>
     </div>
 
     <!-- QUICK FILTER -->
     <nav class="quick-filters" aria-label="Schnellfilter">
-      <button class="quick-btn" data-type="all">Alle Spiele</button>
-      <button class="quick-btn" data-type="top">Top-Ligen</button>
-      <button class="quick-btn" data-type="value10">Value ≥ 10%</button>
+      <button class="quick-btn" data-type="all" aria-pressed="false">Alle Spiele</button>
+      <button class="quick-btn" data-type="top" aria-pressed="false">Top-Ligen</button>
+      <button class="quick-btn" data-type="value10" aria-pressed="false">Value ≥ 10%</button>
     </nav>
 
     <!-- LAST UPDATE -->
-    <p style="margin-top:0.5rem; font-size:0.9rem;">
+    <p class="last-update" aria-live="polite">
       🕒 Letzte Aktualisierung: <span id="last-update">-</span>
     </p>
 
     <!-- STATUS MELDUNGEN -->
-    <div id="status-message" style="color: #ff4444; font-size: 0.9rem;"></div>
+    <div id="status-message" role="alert" aria-live="assertive"></div>
   </header>
 
   <!-- ================= MATCHES ================= -->
   <main>
-    <section id="live-matches-section">
-      <h2 style="text-align:center; margin-top:1rem;">📡 Live Spiele</h2>
-      <div class="match-list" id="live-matches"></div>
+    <section id="live-matches-section" aria-labelledby="live-matches-heading">
+      <h2 id="live-matches-heading" style="text-align:center;">📡 Live Spiele</h2>
+      <div class="match-list" id="live-matches" role="region"></div>
     </section>
 
-    <section id="upcoming-matches-section">
-      <h2 style="text-align:center; margin-top:1rem;">📅 Kommende Spiele</h2>
-      <div class="match-list" id="upcoming-matches"></div>
+    <section id="upcoming-matches-section" aria-labelledby="upcoming-matches-heading">
+      <h2 id="upcoming-matches-heading" style="text-align:center;">📅 Kommende Spiele</h2>
+      <div class="match-list" id="upcoming-matches" role="region"></div>
     </section>
   </main>
 
   <!-- ================= COMBO ================= -->
   <footer>
     <h3>🧮 Beste Kombi-Wette</h3>
-    <div id="combo-output"></div>
+    <div id="combo-output" role="log"></div>
     <p>Gesamtquote: <strong id="total-odds">-</strong> | Gesamt Value: <strong id="total-value">-</strong></p>
-    <button id="copy-combo" aria-label="Kombination kopieren" title="Kopiert die beste Wettkombination">📋 Kombi kopieren</button>
+    <button id="copy-combo" aria-label="Kombination kopieren" title="Kopiert die beste Wettkombination" tabindex="0">📋 Kombi kopieren</button>
   </footer>
 
-  <!-- ✅ Scripts -->
-  <script src="app.js"></script>
+  <!-- ✅ Scripts (Deferred für Performance) -->
+  <script src="app.js" defer></script>
 
-  <!-- ✅ Service Worker Registrierung -->
+  <!-- ✅ Service Worker Registrierung (Inline JS minimiert) -->
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('service-worker.js')
-        .then(() => {
-          document.getElementById('status-message').textContent = '✅ Service Worker registriert';
-          setTimeout(() => document.getElementById('status-message').textContent = '', 3000);
-        })
-        .catch(err => {
-          document.getElementById('status-message').textContent = `❌ Fehler beim Registrieren des SW: ${err.message}`;
-        });
+      navigator.serviceWorker.register('service-worker.js').then(() => {
+        document.getElementById('status-message').textContent = '✅ Service Worker registriert';
+        setTimeout(() => document.getElementById('status-message').textContent = '', 3000);
+      }, err => document.getElementById('status-message').textContent = `❌ SW Fehler: ${err.message}`);
     }
   </script>
 </body>
