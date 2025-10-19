@@ -120,19 +120,22 @@ function renderMatches(matches, odds, containerId) {
     div.className = "match-card";
     if (pinnedMatches.has(match.fixture.id)) div.classList.add("pinned");
 
+    // Debugging-Ausgabe
+    console.log(`Match: ${match.teams.home.name} vs ${match.teams.away.name}, Odds Data:`, o);
+
     // 🟡 Wenn KEINE Quoten vorhanden sind → trotzdem Match anzeigen
-    if (!o || !o.bookmakers || o.bookmakers.length === 0) {
+    if (!o || !o.bookmakers || o.bookmakers.length === 0 || !o.bookmakers[0].bets) {
       div.innerHTML = `
         <div class="match-header">
           <div>
-            <img src="${match.teams.home.logo}"> ${match.teams.home.name}
+            <img src="${match.teams.home.logo || ''}"> ${match.teams.home.name}
             <span>vs</span>
-            ${match.teams.away.name} <img src="${match.teams.away.logo}">
+            ${match.teams.away.name} <img src="${match.teams.away.logo || ''}">
           </div>
           <button class="pin-btn">${pinnedMatches.has(match.fixture.id) ? "📍" : "📌"}</button>
         </div>
         <div class="odds-list">
-          <div class="odds-item no-odds">❌ Quoten noch nicht verfügbar</div>
+          <div class="odds-item no-odds">❌ Quoten nicht verfügbar (Debug: ${o ? 'Keine Bets' : 'Keine Odds-Daten'})</div>
         </div>
       `;
       div.querySelector(".pin-btn").addEventListener('click', () => {
@@ -145,9 +148,30 @@ function renderMatches(matches, odds, containerId) {
     }
 
     // ✅ Quoten vorhanden → normal rendern
-    const bets = o.bookmakers[0]?.bets || [];
+    const bets = o.bookmakers[0].bets || [];
     const bet1x2 = bets.find(b => b.name === "Match Winner");
-    if (!bet1x2) return;
+    if (!bet1x2 || !bet1x2.values || bet1x2.values.length === 0) {
+      div.innerHTML = `
+        <div class="match-header">
+          <div>
+            <img src="${match.teams.home.logo || ''}"> ${match.teams.home.name}
+            <span>vs</span>
+            ${match.teams.away.name} <img src="${match.teams.away.logo || ''}">
+          </div>
+          <button class="pin-btn">${pinnedMatches.has(match.fixture.id) ? "📍" : "📌"}</button>
+        </div>
+        <div class="odds-list">
+          <div class="odds-item no-odds">❌ Kein Match Winner-Bet gefunden</div>
+        </div>
+      `;
+      div.querySelector(".pin-btn").addEventListener('click', () => {
+        if (pinnedMatches.has(match.fixture.id)) pinnedMatches.delete(match.fixture.id);
+        else pinnedMatches.add(match.fixture.id);
+        loadData();
+      });
+      container.appendChild(div);
+      return;
+    }
 
     const oddsArray = bet1x2.values.map(v => parseFloat(v.odd) || 0);
     const impliedProbs = oddsArray.map(o => o ? 1 / o : 0);
@@ -161,9 +185,9 @@ function renderMatches(matches, odds, containerId) {
     div.innerHTML = `
       <div class="match-header">
         <div>
-          <img src="${match.teams.home.logo}"> ${match.teams.home.name}
+          <img src="${match.teams.home.logo || ''}"> ${match.teams.home.name}
           <span>vs</span>
-          ${match.teams.away.name} <img src="${match.teams.away.logo}">
+          ${match.teams.away.name} <img src="${match.teams.away.logo || ''}">
         </div>
         <button class="pin-btn">${pinnedMatches.has(match.fixture.id) ? "📍" : "📌"}</button>
       </div>
