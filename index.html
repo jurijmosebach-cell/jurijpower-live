@@ -19,33 +19,36 @@
     <h1>⚽ Value Betting Tool</h1>
     <div class="controls">
       <input type="date" id="match-date">
-      <select id="league-filter"></select>
+      <select id="league-filter" aria-label="Liga filtern"></select>
       <input type="text" id="team-search" placeholder="Team suchen...">
       <input type="number" id="filter-value" placeholder="Min. Value %" step="0.01">
-      <button id="refresh">🔄 Aktualisieren</button>
+      <button id="refresh" aria-label="Daten aktualisieren" title="Aktualisiert die Spieldaten">🔄 Aktualisieren</button>
     </div>
 
     <!-- QUICK FILTER -->
-    <div class="quick-filters">
+    <nav class="quick-filters" aria-label="Schnellfilter">
       <button class="quick-btn" data-type="all">Alle Spiele</button>
       <button class="quick-btn" data-type="top">Top-Ligen</button>
       <button class="quick-btn" data-type="value10">Value ≥ 10%</button>
-    </div>
+    </nav>
 
     <!-- LAST UPDATE -->
     <p style="margin-top:0.5rem; font-size:0.9rem;">
       🕒 Letzte Aktualisierung: <span id="last-update">-</span>
     </p>
+
+    <!-- STATUS MELDUNGEN -->
+    <div id="status-message" style="color: #ff4444; font-size: 0.9rem;"></div>
   </header>
 
   <!-- ================= MATCHES ================= -->
   <main>
-    <section>
+    <section id="live-matches-section">
       <h2 style="text-align:center; margin-top:1rem;">📡 Live Spiele</h2>
       <div class="match-list" id="live-matches"></div>
     </section>
 
-    <section>
+    <section id="upcoming-matches-section">
       <h2 style="text-align:center; margin-top:1rem;">📅 Kommende Spiele</h2>
       <div class="match-list" id="upcoming-matches"></div>
     </section>
@@ -56,7 +59,7 @@
     <h3>🧮 Beste Kombi-Wette</h3>
     <div id="combo-output"></div>
     <p>Gesamtquote: <strong id="total-odds">-</strong> | Gesamt Value: <strong id="total-value">-</strong></p>
-    <button id="copy-combo">📋 Kombi kopieren</button>
+    <button id="copy-combo" aria-label="Kombination kopieren" title="Kopiert die beste Wettkombination">📋 Kombi kopieren</button>
   </footer>
 
   <!-- ✅ Scripts -->
@@ -66,8 +69,13 @@
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('service-worker.js')
-        .then(() => console.log('✅ Service Worker registriert'))
-        .catch(err => console.error('❌ Fehler beim Registrieren des SW:', err));
+        .then(() => {
+          document.getElementById('status-message').textContent = '✅ Service Worker registriert';
+          setTimeout(() => document.getElementById('status-message').textContent = '', 3000);
+        })
+        .catch(err => {
+          document.getElementById('status-message').textContent = `❌ Fehler beim Registrieren des SW: ${err.message}`;
+        });
     }
   </script>
 </body>
