@@ -124,10 +124,18 @@ function renderMatches(matches, odds, containerId) {
       </div>
       <div class="odds-list">
         ${bet1x2.values.map((v, i) => {
-          const odd = parseFloat(v.odd);
           const val = calculateValue(normalizedProbs[i], odd);
-          const cls = val >= 0.1 ? 'value-high' : val >= 0 ? 'value-mid' : 'value-low';
-          return `<div class="odds-item"><span>${v.value} @ ${v.odd}</span><span class="${cls}">${(val * 100).toFixed(1)}%</span></div>`;
+let cls = val >= 0.1 ? 'value-high' : val >= 0 ? 'value-mid' : 'value-low';
+
+// 👇 Glow nur aktivieren, wenn Value ≥ 10 %
+if (val >= 0.1) {
+  cls += ' glow';
+}
+
+return `<div class="odds-item">
+  <span>${v.value} @ ${v.odd}</span>
+  <span class="${cls}">${(val * 100).toFixed(1)}%</span>
+</div>`;
         }).join('')}
       </div>
     `;
