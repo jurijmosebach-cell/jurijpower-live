@@ -144,3 +144,18 @@ footer {
     transform: scale(1.05);
   }
 }
+/* ✨ Pulsierender Glow-Effekt */
+.glow {
+  animation: pulse-glow 1.5s infinite alternate ease-in-out;
+}
+
+@keyframes pulse-glow {
+  0% {
+    box-shadow: 0 0 8px rgba(0, 255, 106, 0.4);
+    transform: scale(1);
+  }
+  100% {
+    box-shadow: 0 0 18px rgba(0, 255, 106, 0.8);
+    transform: scale(1.05);
+  }
+}
