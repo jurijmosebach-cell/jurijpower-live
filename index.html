@@ -3,7 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Value Betting Tool</title>
+  <title>JurijPower Live</title>
+
+  <!-- ✅ Manifest + PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#000000">
+
+  <!-- ✅ CSS -->
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -53,6 +59,16 @@
     <button id="copy-combo">📋 Kombi kopieren</button>
   </footer>
 
+  <!-- ✅ Scripts -->
   <script src="app.js"></script>
+
+  <!-- ✅ Service Worker Registrierung -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js')
+        .then(() => console.log('✅ Service Worker registriert'))
+        .catch(err => console.error('❌ Fehler beim Registrieren des SW:', err));
+    }
+  </script>
 </body>
 </html>
